@@ -1,6 +1,5 @@
 import 'package:commons/commons.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:rh_mef/net/firebase.dart';
 
@@ -36,13 +35,10 @@ class MyStatefulWidget extends StatefulWidget {
 
 /// This is the private State class that goes with MyStatefulWidget.
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
-  final database = FirebaseDatabase.instance;
-  final databaseReference = FirebaseDatabase.instance.reference();
   SingingCharacter _character = SingingCharacter.plainte;
   final myControllerDesignation = TextEditingController();
   final myControllerNumber = TextEditingController();
   final myControllerEmail = TextEditingController();
-  final myControllerComplaintType = TextEditingController();
   final myControllerObservation = TextEditingController();
 
   Widget build(BuildContext context) {
@@ -122,15 +118,34 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
               style: TextStyle(fontSize: 20.0),
             ),
             onPressed: () {
-              String designation = myControllerDesignation.text;
-              String number = myControllerNumber.text;
-              String email = myControllerEmail.text;
+              String designation = myControllerDesignation.text.isNotEmpty
+                  ? myControllerDesignation.text
+                  : 'N/A';
+              String number = myControllerNumber.text.isNotEmpty
+                  ? myControllerNumber.text
+                  : 'N/A';
+              String email = myControllerEmail.text.isNotEmpty
+                  ? myControllerEmail.text
+                  : 'N/A';
               String complaintType = _character
                   .toString()
                   .substring(_character.toString().indexOf('.') + 1);
               String observation = myControllerObservation.text;
-              // userSetup(designation, number, email, complaintType, observation);
-              successDialog(context, "Votre demande a été envoyé avec succes");
+              if (observation.isEmpty) {
+                print('Observation need to be fill');
+                warningDialog(
+                    context, "Attention veuillez ecrire votre observation");
+              } else {
+                userSetup(
+                    designation, number, email, complaintType, observation);
+                successDialog(
+                    context, "Votre demande a été envoyé avec succes");
+                myControllerDesignation.text = "";
+                myControllerNumber.text = "";
+                myControllerEmail.text = "";
+                myControllerObservation.text = "";
+                _character = SingingCharacter.plainte;
+              }
             },
           ),
         ),

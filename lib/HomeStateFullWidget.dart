@@ -1,25 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
-
-/// Flutter code sample for ListTile
 import 'package:flutter/material.dart';
-import 'package:rh_mef/models/actualites_type.dart';
-import 'package:rh_mef/net/firebase.dart';
+import 'package:rh_mef/net/DatabaseManager.dart';
 
-void main() => runApp(HomeWiget());
-
-/// This is the main application widget.
-class HomeWiget extends StatelessWidget {
-  static const String _title = 'RH Mef online';
+class HomeStateFull extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: _title,
-      home: Scaffold(
-        body: MyStatelessWidget(),
-      ),
-    );
-  }
+  _HomeStateFullState createState() => _HomeStateFullState();
 }
 
 class _ArticleDescription extends StatelessWidget {
@@ -122,7 +107,7 @@ class CustomListItemTwo extends StatelessWidget {
           children: <Widget>[
             AspectRatio(
               aspectRatio: 1.0,
-              child: thumbnail,
+              // child: Image.network('https://picsum.photos/250?image=9'),
             ),
             Expanded(
               child: Padding(
@@ -142,21 +127,11 @@ class CustomListItemTwo extends StatelessWidget {
   }
 }
 
-/// This is the stateless widget that the main application instantiates.
-// ignore: must_be_immutable
-class MyStatelessWidget extends StatelessWidget {
-  MyStatelessWidget({Key key}) : super(key: key);
-
+class _HomeStateFullState extends State<HomeStateFull> {
   // ignore: non_constant_identifier_names
-  List<Actualites> list_actualites = [];
-
+  List list_actualites;
   @override
   Widget build(BuildContext context) {
-    Future.delayed(Duration(seconds: 6), () async {
-      list_actualites = await retriveDataSecondWay();
-      // 5s over, navigate to a new page
-    });
-    print(list_actualites.length);
     return ListView.builder(
       itemCount: list_actualites.length,
       padding: const EdgeInsets.all(10.0),
@@ -168,13 +143,12 @@ class MyStatelessWidget extends StatelessWidget {
                 CustomListItemTwo(
                   thumbnail: Container(
                     decoration: const BoxDecoration(color: Colors.orange),
+                    child: Image.network(list_actualites[index]['ImageUrl']),
                   ),
-                  title: "title ${list_actualites[index].title}",
-                  subtitle:
-                      'Flutter continues to improve and expand its horizons.'
-                      'This text should max out at two lines and clip',
-                  author: 'Com',
-                  publishDate: 'Dec 28',
+                  title: list_actualites[index]['Title'],
+                  subtitle: list_actualites[index]['Description'],
+                  author: list_actualites[index]['Author'],
+                  publishDate: list_actualites[index]['DatePosted'],
                 ),
               ],
             ),
@@ -184,14 +158,22 @@ class MyStatelessWidget extends StatelessWidget {
     );
   }
 
-  @override
-  void initState() {
-    // super.initState();
-    Firebase.initializeApp().whenComplete(() {
-      fetchData();
-      print("completed");
-    });
+  fetchData() async {
+    dynamic data = await DatabaseManager().getNewsList();
+    if (data == null) {
+      print("Unable to retrieve the data");
+    } else {
+      setState(() {
+        print("get the data");
+        list_actualites = data;
+      });
+    }
   }
 
-  void fetchData() {}
+  void initState() {
+    super.initState();
+    Firebase.initializeApp().whenComplete(() {
+      fetchData();
+    });
+  }
 }
