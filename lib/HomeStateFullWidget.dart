@@ -107,7 +107,9 @@ class CustomListItemTwo extends StatelessWidget {
           children: <Widget>[
             AspectRatio(
               aspectRatio: 1.0,
-              // child: Image.network('https://picsum.photos/250?image=9'),
+              child: Image(
+                image: AssetImage('assets/images/embleme.png'),
+              ),
             ),
             Expanded(
               child: Padding(
@@ -132,30 +134,32 @@ class _HomeStateFullState extends State<HomeStateFull> {
   List list_actualites;
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: list_actualites.length,
-      padding: const EdgeInsets.all(10.0),
-      itemBuilder: (BuildContext context, int index) {
-        return Container(
-          child: Card(
-            child: Column(
-              children: [
-                CustomListItemTwo(
-                  thumbnail: Container(
-                    decoration: const BoxDecoration(color: Colors.orange),
-                    child: Image.network(list_actualites[index]['ImageUrl']),
+    if (list_actualites.length == 0)
+      return Container();
+    else
+      return ListView.builder(
+        itemCount: list_actualites.length,
+        padding: const EdgeInsets.all(10.0),
+        itemBuilder: (BuildContext context, int index) {
+          return Container(
+            child: Card(
+              child: Column(
+                children: [
+                  CustomListItemTwo(
+                    thumbnail: Container(
+                      decoration: const BoxDecoration(color: Colors.orange),
+                    ),
+                    title: list_actualites[index]['Title'],
+                    subtitle: list_actualites[index]['Description'],
+                    author: list_actualites[index]['Author'],
+                    publishDate: list_actualites[index]['DatePosted'],
                   ),
-                  title: list_actualites[index]['Title'],
-                  subtitle: list_actualites[index]['Description'],
-                  author: list_actualites[index]['Author'],
-                  publishDate: list_actualites[index]['DatePosted'],
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    );
+          );
+        },
+      );
   }
 
   fetchData() async {

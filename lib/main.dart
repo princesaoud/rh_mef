@@ -2,7 +2,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:rh_mef/HomeStateFullWidget.dart';
-import 'package:rh_mef/complaint.dart';
+import 'package:rh_mef/constantes.dart';
+import 'package:rh_mef/view/complaint.dart';
+import 'package:rh_mef/view/demande_dactes.dart';
 
 void main() {
   runApp(MyApp());
@@ -56,6 +58,11 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+  final GlobalKey<ScaffoldState> _drawerKey = GlobalKey();
+
+  void _openDrawer(_) {
+    _drawerKey.currentState.openDrawer();
+  }
 
   int _selectedIndex = 0;
   static const TextStyle optionStyle =
@@ -71,8 +78,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
+    WidgetsBinding.instance.addPostFrameCallback(_openDrawer);
     super.initState();
     firebaseCloudMessaging_Listeners();
+
     Firebase.initializeApp().whenComplete(() {
       print("completed");
       setState(() {});
@@ -118,32 +127,112 @@ class _MyHomePageState extends State<MyHomePage> {
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: const Text('RH MEF ONLINE'),
+        centerTitle: true,
       ),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
+      drawer: Drawer(
+        key: _drawerKey,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.orangeAccent,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.message),
-            label: 'Suggestion',
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              DrawerHeader(
+                child: Text(''),
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                      image: AssetImage("assets/images/logo.png"),
+                      fit: BoxFit.fill),
+                  color: Colors.orange,
+                ),
+              ),
+              ListTile(
+                title: Text(Constants.accueil),
+                leading: Icon(Icons.home),
+                onTap: () {
+                  // Update the state of the app
+                  // ...
+                  // Then close the drawer
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: Text(Constants.suggestion),
+                leading: Icon(Icons.message),
+                onTap: () {
+                  // Update the state of the app
+                  // ...
+                  // Then close the drawer
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: Text(Constants.dmd_act),
+                leading: Icon(Icons.email),
+                onTap: () {
+                  // Update the state of the app
+                  // ...
+                  // Then close the drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Demande_Actes()),
+                  );
+                  // Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: Text(Constants.infos),
+                leading: Icon(Icons.info),
+                onTap: () {
+                  // Update the state of the app
+                  // ...
+                  // Then close the drawer
+                  Navigator.pop(context);
+                },
+              ),
+            ],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.info),
-            label: 'A Propos',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
-        onTap: _onItemTapped,
+        ),
       ),
+      //TODO: BottomBar navigation
+      // bottomNavigationBar: BottomNavigationBar(
+      //   items: const <BottomNavigationBarItem>[
+      //     BottomNavigationBarItem(
+      //       icon: Icon(Icons.home),
+      //       label: 'Home',
+      //     ),
+      //     BottomNavigationBarItem(
+      //       icon: Icon(Icons.message),
+      //       label: 'Suggestion',
+      //     ),
+      //     BottomNavigationBarItem(
+      //       icon: Icon(Icons.info),
+      //       label: 'A Propos',
+      //     ),
+      //   ],
+      //   currentIndex: _selectedIndex,
+      //   selectedItemColor: Colors.amber[800],
+      //   onTap: _onItemTapped,
+      // ),
       // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+
+  void selectAction(String value) {
+    if (value == Constants.settings) {
+      print(value);
+    } else if (value == Constants.dmd_act) {
+      print(value);
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => Demande_Actes()),
+      );
+    }
   }
 }

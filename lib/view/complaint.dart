@@ -106,6 +106,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             controller: myControllerObservation,
             maxLines: 3,
             minLines: 2,
+            textInputAction: TextInputAction.done,
             decoration: InputDecoration(labelText: 'Observation'),
           ),
         ),
@@ -137,14 +138,16 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                     context, "Attention veuillez ecrire votre observation");
               } else {
                 userSetup(
-                    designation, number, email, complaintType, observation);
-                successDialog(
-                    context, "Votre demande a été envoyé avec succes");
-                myControllerDesignation.text = "";
-                myControllerNumber.text = "";
-                myControllerEmail.text = "";
-                myControllerObservation.text = "";
-                _character = SingingCharacter.plainte;
+                        designation, number, email, complaintType, observation)
+                    .then((value) {
+                  successDialog(
+                      context, "Votre demande a été envoyé avec succes");
+                  myControllerDesignation.text = "";
+                  myControllerNumber.text = "";
+                  myControllerEmail.text = "";
+                  myControllerObservation.text = "";
+                  _character = SingingCharacter.plainte;
+                });
               }
             },
           ),
@@ -154,17 +157,17 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   }
 
   onPressed() {
-    print('button pressed');
-    // NORMAL
-    String designation = myControllerDesignation.text;
-    String number = myControllerNumber.text;
-    String email = myControllerEmail.text;
-    String complaintType =
-        _character.toString().substring(_character.toString().indexOf('.') + 1);
-    String observation = myControllerObservation.text;
-    userSetup(designation, number, email, complaintType, observation);
-    //TODO: add alert dialog of successfully add data
-    // successDialog(context, "Votre demande a été envoyé avec succes");
+    // print('button pressed');
+    // // NORMAL
+    // String designation = myControllerDesignation.text;
+    // String number = myControllerNumber.text;
+    // String email = myControllerEmail.text;
+    // String complaintType =
+    //     _character.toString().substring(_character.toString().indexOf('.') + 1);
+    // String observation = myControllerObservation.text;
+    // userSetup(designation, number, email, complaintType, observation);
+    // //TODO: add alert dialog of successfully add data
+    // // successDialog(context, "Votre demande a été envoyé avec succes");
   }
 
   @override
