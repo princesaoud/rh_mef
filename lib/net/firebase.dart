@@ -1,20 +1,41 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rh_mef/models/actualites_type.dart';
+import 'package:rh_mef/models/mDemandeActe.dart';
 
 class CustomFirebaseMangement {}
 
 Future<void> userSetup(String designation, String number, String email,
     String complaintType, String observation) async {
-  CollectionReference plaintes =
-      FirebaseFirestore.instance.collection('Plaintes');
+  CollectionReference acteDemand =
+      FirebaseFirestore.instance.collection('acteDemand');
   // FirebaseAuth auth = FirebaseAuth.instance;
   // String uid = auth.currentUser.uid.toString();
-  plaintes.add({
+  acteDemand.add({
     'designation': designation,
     'number': number,
     'email': email,
     'complaintType': complaintType,
     'observation': observation,
+  });
+  return;
+}
+
+Future<void> demandeActeSetup(DemandeActe _demandeacte) async {
+  CollectionReference acteDemand =
+      FirebaseFirestore.instance.collection('ActeDemand');
+  // FirebaseAuth auth = FirebaseAuth.instance;
+  // String uid = auth.currentUser.uid.toString();
+  acteDemand.add({
+    'key': "",
+    'matricule': _demandeacte.matricule,
+    'nom': _demandeacte.nom,
+    'telephone': _demandeacte.telephone,
+    'email': _demandeacte.email,
+    'datePriseService': _demandeacte.datePriseService,
+    'emploi': _demandeacte.email,
+    'natureActe': _demandeacte.natureActe,
+    'pieceJointe': _demandeacte.pieceJointe,
+    'motif': _demandeacte.motif,
   });
   return;
 }

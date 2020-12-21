@@ -1,7 +1,13 @@
+import 'package:commons/commons.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:rh_mef/constantes.dart';
+import 'package:rh_mef/models/mDemandeActe.dart';
+import 'package:rh_mef/net/firebase.dart';
+import 'package:rh_mef/selectFileSystem.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // void main() => runApp(MyApp());
 
@@ -47,25 +53,37 @@ class MyStatefulWidget extends StatefulWidget {
 
 /// This is the private State class that goes with MyStatefulWidget.
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
-  final myControllerDesignation = TextEditingController();
-  final myControllerNumber = TextEditingController();
+  final myControllerMatricule = TextEditingController();
+  final myControllerNom = TextEditingController();
+  final myControllerTel = TextEditingController();
   final myControllerEmail = TextEditingController();
-  final myControllerObservation = TextEditingController();
-  String _currentValueSelected = "";
+  String datePicked = "Click pour date de prise de service (MEF)";
+  String pickedEmploi = "Click Pour choisir votre emploi";
+  String pickedActes = "Click pour Choisir votre actes";
+  String pickedPiecesJointe = "Ajouter une piece jointes";
+  String pickedMotif = "Click Pour ajouter une motif";
+  DateTime _dateTime;
+
+  String _currentValueSelected = "...";
+
+  //TODO: DECLARE VARIABLE FOR FILE HANDLING SYSTEM
+
   Widget build(BuildContext context) {
     return ListView(
       children: <Widget>[
         new ListTile(
           leading: const Icon(Icons.person),
           title: new TextField(
+            controller: myControllerMatricule,
             decoration: new InputDecoration(
-              hintText: "Matricule",
+              hintText: "Entrer le matricule",
             ),
           ),
         ),
         new ListTile(
           leading: const Icon(Icons.person),
           title: new TextField(
+            controller: myControllerNom,
             decoration: new InputDecoration(
               hintText: "Nom et Prénoms",
             ),
@@ -74,6 +92,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         new ListTile(
           leading: const Icon(Icons.phone),
           title: new TextField(
+            controller: myControllerTel,
             decoration: new InputDecoration(
               hintText: "Telephone",
             ),
@@ -82,6 +101,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         new ListTile(
           leading: const Icon(Icons.email),
           title: new TextField(
+            controller: myControllerEmail,
             decoration: new InputDecoration(
               hintText: "Email",
             ),
@@ -89,53 +109,43 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         ),
         new ListTile(
           onTap: () {
-            _showMyDialog();
+            _showDatePicker();
           },
           leading: const Icon(Icons.date_range),
-          title: Text("Date de prise de service (MEF)"),
+          title: Text(datePicked),
         ),
         new ListTile(
+          onTap: () {
+            _showDropList(Constants.list_emplois, 1);
+          },
           leading: const Icon(Icons.person_outline_sharp),
-          title: new TextField(
-            decoration: new InputDecoration(
-              hintText: "Emploi DD",
-            ),
-          ),
+          title: new Text(pickedEmploi),
         ),
         new ListTile(
+          onTap: () {
+            _showDropList(Constants.list_actes, 2);
+          },
           leading: const Icon(Icons.person),
-          title: new TextField(
-            decoration: new InputDecoration(
-              hintText: "Nature de l'acte DD",
-            ),
-          ),
+          title: Text(pickedActes),
         ),
         new ListTile(
-          leading: const Icon(Icons.photo_camera_outlined),
-          title: new TextField(
-            decoration: new InputDecoration(
-              hintText: "Piece jointe",
-            ),
-          ),
-        ),
-        ListTile(
-          leading: Icon(Icons.message_rounded),
-          title: DropdownButton(
-            items: <String>['A', 'B', 'C', 'D'].map((String value) {
-              return DropdownMenuItem<String>(
-                onTap: () {
-                  _currentValueSelected = value;
-                  print(_currentValueSelected);
-                },
-                value: _currentValueSelected,
-                child: new Text(value),
+            onTap: () async {
+              SharedPreferences prefs = await SharedPreferences.getInstance();
+              prefs.setString(
+                  Constants.prefs_imageName, DateTime.now().toString());
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SelectFileSys()),
               );
-            }).toList(),
-            onChanged: (value) {
-              _currentValueSelected = value;
             },
-          ),
-        ),
+            leading: const Icon(Icons.photo_camera_outlined),
+            title: Text(pickedPiecesJointe)),
+        ListTile(
+            onTap: () {
+              _showDropList(Constants.list_motifs, 4);
+            },
+            leading: Icon(Icons.message_rounded),
+            title: Text(pickedMotif)),
         const Divider(
           height: 2.0,
         ),
@@ -147,25 +157,35 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
               "Valider",
               style: TextStyle(fontSize: 20.0),
             ),
-            onPressed: () {},
+            onPressed: () async {
+              SharedPreferences prefs = await SharedPreferences.getInstance();
+              String matricule = myControllerMatricule.value.text.isNotEmpty
+                  ? myControllerMatricule.value.text
+                  : "N/A";
+              String nom = myControllerNom.value.text.isNotEmpty
+                  ? myControllerNom.value.text
+                  : "N/A";
+              String tel = myControllerTel.value.text.isNotEmpty
+                  ? myControllerTel.value.text
+                  : "N/A";
+              String email = myControllerEmail.value.text.isNotEmpty
+                  ? myControllerEmail.value.text
+                  : "N/A";
+              String emploi = pickedEmploi;
+              String acte = pickedActes;
+              String piece = prefs.getString("imageUrl");
+              String motif = pickedMotif;
+              String dated = datePicked;
+
+              DemandeActe _demandeacte = DemandeActe("", matricule, nom, tel,
+                  email, dated, emploi, acte, piece, motif);
+              demandeActeSetup(_demandeacte);
+              // print(_demandeacte.toString());
+            },
           ),
         ),
       ],
     );
-  }
-
-  onPressed() {
-    // print('button pressed');
-    // // NORMAL
-    // String designation = myControllerDesignation.text;
-    // String number = myControllerNumber.text;
-    // String email = myControllerEmail.text;
-    // String Demande_ActesType =
-    //     _character.toString().substring(_character.toString().indexOf('.') + 1);
-    // String observation = myControllerObservation.text;
-    // userSetup(designation, number, email, Demande_ActesType, observation);
-    // //TODO: add alert dialog of successfully add data
-    // // successDialog(context, "Votre demande a été envoyé avec succes");
   }
 
   @override
@@ -182,7 +202,61 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     super.dispose();
   }
 
-  Future<void> _showMyDialog() async {
+  Future<void> _showDropList(List<String> list, int type) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Dropdown'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                DropdownButton(
+                  items: list.map((String value) {
+                    return DropdownMenuItem<String>(
+                      onTap: () {
+                        _currentValueSelected = value;
+                        if (type == 1) {
+                          setState(() {
+                            pickedEmploi = value;
+                          });
+                        } else if (type == 2) {
+                          setState(() {
+                            pickedActes = value;
+                          });
+                        } else if (type == 4) {
+                          setState(() {
+                            pickedMotif = value;
+                          });
+                        }
+                        print(_currentValueSelected);
+                        Navigator.of(context).pop();
+                      },
+                      child: new Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    _currentValueSelected = value;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(""),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showDatePicker() async {
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
@@ -196,10 +270,15 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                   height: 200,
                   child: CupertinoDatePicker(
                     mode: CupertinoDatePickerMode.date,
-                    initialDateTime: DateTime(2012, 1, 1),
+                    maximumDate: DateTime.now(),
+                    initialDateTime: DateTime(2000, 1, 1),
                     onDateTimeChanged: (DateTime newDateTime) {
                       // Do something
-                      print(newDateTime);
+                      // datePicked = newDateTime.toString();
+                      setState(() {
+                        _dateTime = newDateTime;
+                      });
+                      datePicked = DateFormat('dd-MM-yyyy').format(_dateTime);
                     },
                   ),
                 ),
@@ -210,6 +289,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             TextButton(
               child: Text(Constants.valider),
               onPressed: () {
+                datePicked = DateFormat('yyyy-MM-dd').format(_dateTime);
                 Navigator.of(context).pop();
               },
             ),

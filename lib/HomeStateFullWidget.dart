@@ -129,9 +129,9 @@ class CustomListItemTwo extends StatelessWidget {
   }
 }
 
-class _HomeStateFullState extends State<HomeStateFull> {
-  // ignore: non_constant_identifier_names
+class ContaintItem extends StatelessWidget {
   List list_actualites;
+
   @override
   Widget build(BuildContext context) {
     if (list_actualites.length == 0)
@@ -160,6 +160,39 @@ class _HomeStateFullState extends State<HomeStateFull> {
           );
         },
       );
+  }
+}
+
+class _HomeStateFullState extends State<HomeStateFull> {
+  // ignore: non_constant_identifier_names
+  List list_actualites;
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: ListView.builder(
+        itemCount: list_actualites.length,
+        padding: const EdgeInsets.all(10.0),
+        itemBuilder: (BuildContext context, int index) {
+          return Container(
+            child: Card(
+              child: Column(
+                children: [
+                  CustomListItemTwo(
+                    thumbnail: Container(
+                      decoration: const BoxDecoration(color: Colors.orange),
+                    ),
+                    title: list_actualites[index]['Title'],
+                    subtitle: list_actualites[index]['Description'],
+                    author: list_actualites[index]['Author'],
+                    publishDate: list_actualites[index]['DatePosted'],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   fetchData() async {

@@ -5,6 +5,7 @@ import 'package:rh_mef/HomeStateFullWidget.dart';
 import 'package:rh_mef/constantes.dart';
 import 'package:rh_mef/view/complaint.dart';
 import 'package:rh_mef/view/demande_dactes.dart';
+import 'package:rh_mef/view/detailsInformation.dart';
 
 void main() {
   runApp(MyApp());
@@ -78,7 +79,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
-    WidgetsBinding.instance.addPostFrameCallback(_openDrawer);
+    // WidgetsBinding.instance.addPostFrameCallback(_openDrawer);
     super.initState();
     firebaseCloudMessaging_Listeners();
 
@@ -122,6 +123,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
+
     return Scaffold(
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
@@ -132,7 +134,8 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
-        child: _widgetOptions.elementAt(_selectedIndex),
+        //_widgetOptions.elementAt(_selectedIndex)
+        child: HomeStateFull(),
       ),
       drawer: Drawer(
         key: _drawerKey,
@@ -159,6 +162,12 @@ class _MyHomePageState extends State<MyHomePage> {
                   // Update the state of the app
                   // ...
                   // Then close the drawer
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(
+                  //       builder: (context) => DetailsInformations()),
+                  // );
+
                   Navigator.pop(context);
                 },
               ),
@@ -167,9 +176,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 leading: Icon(Icons.message),
                 onTap: () {
                   // Update the state of the app
-                  // ...
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Complaint()),
+                  );
                   // Then close the drawer
-                  Navigator.pop(context);
+                  // Navigator.pop(context);
                 },
               ),
               ListTile(
@@ -193,6 +205,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   // Update the state of the app
                   // ...
                   // Then close the drawer
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(builder: (context) => SelectFileSys()),
+                  // );
                   Navigator.pop(context);
                 },
               ),
