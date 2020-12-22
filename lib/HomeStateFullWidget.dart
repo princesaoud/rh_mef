@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:rh_mef/net/DatabaseManager.dart';
+import 'package:rh_mef/view/detailsInformation.dart';
 
 class HomeStateFull extends StatefulWidget {
   @override
@@ -173,20 +174,28 @@ class _HomeStateFullState extends State<HomeStateFull> {
         itemCount: list_actualites.length,
         padding: const EdgeInsets.all(10.0),
         itemBuilder: (BuildContext context, int index) {
-          return Container(
-            child: Card(
-              child: Column(
-                children: [
-                  CustomListItemTwo(
-                    thumbnail: Container(
-                      decoration: const BoxDecoration(color: Colors.orange),
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => DetailsInformations()));
+            },
+            child: Container(
+              child: Card(
+                child: Column(
+                  children: [
+                    CustomListItemTwo(
+                      thumbnail: Container(
+                        decoration: const BoxDecoration(color: Colors.orange),
+                      ),
+                      title: list_actualites[index]['Title'],
+                      subtitle: list_actualites[index]['Description'],
+                      author: list_actualites[index]['Author'],
+                      publishDate: list_actualites[index]['DatePosted'],
                     ),
-                    title: list_actualites[index]['Title'],
-                    subtitle: list_actualites[index]['Description'],
-                    author: list_actualites[index]['Author'],
-                    publishDate: list_actualites[index]['DatePosted'],
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );
