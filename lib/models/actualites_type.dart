@@ -7,9 +7,10 @@ class Actualites {
   String author;
   String published_date;
   String imageAsset;
+  String link;
 
   Actualites(this.key, this.title, this.subtitle, this.author,
-      this.published_date, this.imageAsset);
+      this.published_date, this.imageAsset, this.link);
 
   Actualites.fromSnapshot(DataSnapshot snapshot)
       : key = snapshot.key,
@@ -17,6 +18,7 @@ class Actualites {
         subtitle = snapshot.value["subtitle"],
         author = snapshot.value["author"],
         published_date = snapshot.value["published_date"],
+        link = snapshot.value["link"],
         imageAsset = snapshot.value["imageAsset"];
 
   toJson() {
@@ -26,6 +28,7 @@ class Actualites {
       "author": author,
       "published_date": published_date,
       "imageAsset": imageAsset,
+      "link": link,
     };
   }
 }

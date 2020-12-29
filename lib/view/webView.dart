@@ -59,8 +59,7 @@ class _WebViewExampleState extends State<WebViewExample> {
       body: Stack(
         children: <Widget>[
           WebView(
-            initialUrl:
-                "http://drh.finances.gouv.ci/index.php/front-page/navigator/viewpage/_actualite/83",
+            initialUrl: url,
             javascriptMode: JavascriptMode.unrestricted,
             onPageFinished: (_) {
               setState(() {

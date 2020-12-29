@@ -152,6 +152,12 @@ class SectionTitle extends StatelessWidget {
   }
 }
 
+// void main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   await Firebase.initializeApp();
+//   runApp(DetailsInformations());
+// }
+
 class TravelDestinationContent extends StatelessWidget {
   const TravelDestinationContent({key, this.destination}) : super(key: key);
   final Actualites destination;
@@ -182,10 +188,12 @@ class TravelDestinationContent extends StatelessWidget {
 //                   fit: BoxFit.cover,
 //                   child: Container(),
 //                 ),
-                child: Image.network(
-                  destination.imageAsset,
-                  fit: BoxFit.fill,
-                ),
+                child: destination.imageAsset == null
+                    ? Image.network('https://picsum.photos/200/300')
+                    : Image.network(
+                        destination.imageAsset,
+                        fit: BoxFit.fill,
+                      ),
               ),
 
               //TODO: old position of the title on the image
@@ -232,10 +240,14 @@ class TravelDestinationContent extends StatelessWidget {
                   softWrap: false,
                   style: TextStyle(fontSize: 20),
                 ),
-                Text(
-                  destination.subtitle,
-                  style: descriptionStyle.copyWith(color: Colors.black54),
-                  softWrap: false,
+                Container(
+                  child: Text(
+                    destination.subtitle,
+                    style: descriptionStyle.copyWith(color: Colors.black54),
+                    softWrap: false,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 Text(destination.author),
                 Text(destination.published_date),
@@ -256,7 +268,7 @@ class TravelDestinationContent extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
-                            WebViewExample("http://drh.finances.gouv.ci")));
+                            WebViewExample(destination.link)));
               },
               child: Text('Plus d\'informations',
                   semanticsLabel: 'Share ${destination.title}'),
@@ -277,7 +289,7 @@ class TravelDestinationContent extends StatelessWidget {
 }
 
 class DetailsInformations extends StatefulWidget {
-  static const String routeName = '/material/cards';
+  // static const String routeName = '/material/cards';
   @override
   _DetailsInformationsState createState() => _DetailsInformationsState();
 }
@@ -345,7 +357,8 @@ class _DetailsInformationsState extends State<DetailsInformations> {
                         documentSnapshot.data()["Description"],
                         documentSnapshot.data()["Author"],
                         documentSnapshot.data()["DatePosted"],
-                        documentSnapshot.data()["ImageUrl"]);
+                        documentSnapshot.data()["ImageUrl"],
+                        documentSnapshot.data()["Link"]);
 
                     return Container(
                       child: Column(
@@ -359,5 +372,10 @@ class _DetailsInformationsState extends State<DetailsInformations> {
             }),
       ),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
   }
 }

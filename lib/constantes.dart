@@ -6,6 +6,7 @@ class Constants {
   static const String infos = "Plus d'infos";
   static const String valider = "Valider";
   static const String choisirDate = "Choissez votre date";
+  static const String adminText = "Add News Actualites";
 
   static const String prefs_imageName = "imageName";
 

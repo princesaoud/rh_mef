@@ -2,12 +2,15 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:rh_mef/HomeStateFullWidget.dart';
+import 'package:rh_mef/adminpanel/actualitesAdminist.dart';
 import 'package:rh_mef/constantes.dart';
 import 'package:rh_mef/view/complaint.dart';
 import 'package:rh_mef/view/demande_dactes.dart';
 import 'package:rh_mef/view/detailsInformation.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(MyApp());
 }
 
@@ -34,7 +37,7 @@ class MyApp extends StatelessWidget {
         // closer together (more dense) than on mobile platforms.
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MyHomePage(title: 'RH MEF ONLINE Home Page'),
+      home: MyHomePage(title: 'DRH MEF ONLINE '),
     );
   }
 }
@@ -82,11 +85,6 @@ class _MyHomePageState extends State<MyHomePage> {
     // WidgetsBinding.instance.addPostFrameCallback(_openDrawer);
     super.initState();
     firebaseCloudMessaging_Listeners();
-
-    Firebase.initializeApp().whenComplete(() {
-      print("completed");
-      setState(() {});
-    });
   }
 
   void firebaseCloudMessaging_Listeners() {
@@ -123,20 +121,14 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
-
     return Scaffold(
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: const Text('RH MEF ONLINE'),
+        title: const Text('DRH MEF ONLINE'),
         centerTitle: true,
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        //_widgetOptions.elementAt(_selectedIndex)
-        child: DetailsInformations(),
-      ),
+      body: DetailsInformations(),
       drawer: Drawer(
         key: _drawerKey,
         child: Container(
@@ -210,6 +202,21 @@ class _MyHomePageState extends State<MyHomePage> {
                   //   MaterialPageRoute(builder: (context) => SelectFileSys()),
                   // );
                   Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: Text(Constants.adminText),
+                leading: Icon(Icons.settings),
+                onTap: () {
+                  // Update the state of the app
+                  // ...
+                  // Then close the drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => ActualitesAdminist()),
+                  );
+                  // Navigator.pop(context);
                 },
               ),
             ],

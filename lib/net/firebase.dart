@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rh_mef/models/actualites_type.dart';
 import 'package:rh_mef/models/mDemandeActe.dart';
 
-class CustomFirebaseMangement {}
+// class CustomFirebaseMangement {}
 
 Future<void> userSetup(String designation, String number, String email,
     String complaintType, String observation) async {
@@ -36,6 +36,21 @@ Future<void> demandeActeSetup(DemandeActe _demandeacte) async {
     'natureActe': _demandeacte.natureActe,
     'pieceJointe': _demandeacte.pieceJointe,
     'motif': _demandeacte.motif,
+  });
+  return;
+}
+
+Future<void> newsSetup(Actualites actualites) async {
+  CollectionReference newsadd = FirebaseFirestore.instance.collection('News');
+  // FirebaseAuth auth = FirebaseAuth.instance;
+  // String uid = auth.currentUser.uid.toString();
+  newsadd.add({
+    'Title': actualites.title,
+    'Description': actualites.subtitle,
+    'Author': actualites.author,
+    'DatePosted': actualites.published_date,
+    'Link': actualites.link,
+    'ImageUrl': actualites.imageAsset,
   });
   return;
 }
