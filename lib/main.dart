@@ -1,16 +1,18 @@
+import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:rh_mef/HomeStateFullWidget.dart';
-import 'package:rh_mef/adminpanel/actualitesAdminist.dart';
 import 'package:rh_mef/constantes.dart';
 import 'package:rh_mef/view/complaint.dart';
 import 'package:rh_mef/view/demande_dactes.dart';
 import 'package:rh_mef/view/detailsInformation.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  // await Firebase.initializeApp();
   runApp(MyApp());
 }
 
@@ -84,14 +86,39 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     // WidgetsBinding.instance.addPostFrameCallback(_openDrawer);
     super.initState();
-    firebaseCloudMessaging_Listeners();
+
+    if (Platform.isAndroid) {
+      firebaseCloudMessaging_Listeners();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant MyHomePage oldWidget) {
+    // TODO: implement didUpdateWidget
+    super.didUpdateWidget(oldWidget);
+    print("called didUpdateWidget()");
+    var database = FirebaseFirestore.instance
+        .collection("ActeDemand")
+        .get()
+        .then((querySnapshot) => {
+              querySnapshot.docs.forEach((element) {
+                print(element.data()['statuts']);
+              })
+            });
+
+    print(database);
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    print("dispose called");
   }
 
   void firebaseCloudMessaging_Listeners() {
-    // if (Platform.isIOS) iOS_Permission();
-
     _firebaseMessaging.getToken().then((token) {
-      print("token of the device is : $token");
+      // print("token of the device is : $token");
     });
 
     _firebaseMessaging.configure(
@@ -121,129 +148,123 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: const Text('DRH MEF ONLINE'),
-        centerTitle: true,
-      ),
-      body: DetailsInformations(),
-      drawer: Drawer(
-        key: _drawerKey,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.orangeAccent,
-          ),
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              DrawerHeader(
-                child: Text(''),
+    return FutureBuilder(
+      future: Firebase.initializeApp(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          return Scaffold(
+            appBar: AppBar(
+              // Here we take the value from the MyHomePage object that was created by
+              // the App.build method, and use it to set our appbar title.
+              title: const Text('DRH MEF ONLINE'),
+              centerTitle: true,
+            ),
+            body: DetailsInformations(),
+            drawer: Drawer(
+              key: _drawerKey,
+              child: Container(
                 decoration: BoxDecoration(
-                  image: DecorationImage(
-                      image: AssetImage("assets/images/logo.png"),
-                      fit: BoxFit.fill),
-                  color: Colors.orange,
+                  color: Colors.orangeAccent,
+                ),
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    DrawerHeader(
+                      child: Text(''),
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: AssetImage("assets/images/logo.png"),
+                            fit: BoxFit.fill),
+                        color: Colors.orange,
+                      ),
+                    ),
+                    ListTile(
+                      title: Text(Constants.accueil),
+                      leading: Icon(Icons.home),
+                      onTap: () {
+                        // Update the state of the app
+                        // ...
+                        // Then close the drawer
+                        // Navigator.push(
+                        //   context,
+                        //   MaterialPageRoute(
+                        //       builder: (context) => DetailsInformations()),
+                        // );
+
+                        Navigator.pop(context);
+                      },
+                    ),
+                    ListTile(
+                      title: Text(Constants.suggestion),
+                      leading: Icon(Icons.message),
+                      onTap: () {
+                        // Update the state of the app
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => Complaint()),
+                        );
+                        // Then close the drawer
+                        // Navigator.pop(context);
+                      },
+                    ),
+                    ListTile(
+                      title: Text(Constants.dmd_act),
+                      leading: Icon(Icons.email),
+                      onTap: () {
+                        // Update the state of the app
+                        // ...
+                        // Then close the drawer
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => Demande_Actes()),
+                        );
+                        // Navigator.pop(context);
+                      },
+                    ),
+                    ListTile(
+                      title: Text(Constants.infos),
+                      leading: Icon(Icons.info),
+                      onTap: () {
+                        // Update the state of the app
+                        // ...
+                        // Then close the drawer
+                        // Navigator.push(
+                        //   context,
+                        //   MaterialPageRoute(builder: (context) => SelectFileSys()),
+                        // );
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
                 ),
               ),
-              ListTile(
-                title: Text(Constants.accueil),
-                leading: Icon(Icons.home),
-                onTap: () {
-                  // Update the state of the app
-                  // ...
-                  // Then close the drawer
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(
-                  //       builder: (context) => DetailsInformations()),
-                  // );
-
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: Text(Constants.suggestion),
-                leading: Icon(Icons.message),
-                onTap: () {
-                  // Update the state of the app
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => Complaint()),
-                  );
-                  // Then close the drawer
-                  // Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: Text(Constants.dmd_act),
-                leading: Icon(Icons.email),
-                onTap: () {
-                  // Update the state of the app
-                  // ...
-                  // Then close the drawer
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => Demande_Actes()),
-                  );
-                  // Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: Text(Constants.infos),
-                leading: Icon(Icons.info),
-                onTap: () {
-                  // Update the state of the app
-                  // ...
-                  // Then close the drawer
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(builder: (context) => SelectFileSys()),
-                  // );
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: Text(Constants.adminText),
-                leading: Icon(Icons.settings),
-                onTap: () {
-                  // Update the state of the app
-                  // ...
-                  // Then close the drawer
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => ActualitesAdminist()),
-                  );
-                  // Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-      //TODO: BottomBar navigation
-      // bottomNavigationBar: BottomNavigationBar(
-      //   items: const <BottomNavigationBarItem>[
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.home),
-      //       label: 'Home',
-      //     ),
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.message),
-      //       label: 'Suggestion',
-      //     ),
-      //     BottomNavigationBarItem(
-      //       icon: Icon(Icons.info),
-      //       label: 'A Propos',
-      //     ),
-      //   ],
-      //   currentIndex: _selectedIndex,
-      //   selectedItemColor: Colors.amber[800],
-      //   onTap: _onItemTapped,
-      // ),
-      // This trailing comma makes auto-formatting nicer for build methods.
+            ),
+            //TODO: BottomBar navigation
+            // bottomNavigationBar: BottomNavigationBar(
+            //   items: const <BottomNavigationBarItem>[
+            //     BottomNavigationBarItem(
+            //       icon: Icon(Icons.home),
+            //       label: 'Home',
+            //     ),
+            //     BottomNavigationBarItem(
+            //       icon: Icon(Icons.message),
+            //       label: 'Suggestion',
+            //     ),
+            //     BottomNavigationBarItem(
+            //       icon: Icon(Icons.info),
+            //       label: 'A Propos',
+            //     ),
+            //   ],
+            //   currentIndex: _selectedIndex,
+            //   selectedItemColor: Colors.amber[800],
+            //   onTap: _onItemTapped,
+            // ),
+            // This trailing comma makes auto-formatting nicer for build methods.
+          );
+        }
+        return CircularProgressIndicator();
+      },
     );
   }
 

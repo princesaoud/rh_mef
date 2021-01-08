@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:rh_mef/models/actualites_type.dart';
 import 'package:rh_mef/view/webView.dart';
@@ -328,47 +329,48 @@ class _DetailsInformationsState extends State<DetailsInformations> {
       // ),
       body: Scrollbar(
         child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection("News").snapshots(),
+            stream: FirebaseFirestore.instance.collection('News').snapshots(),
             builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
               if (snapshot.hasError) {
                 print("Something went wrong");
+                print(snapshot.error);
                 return Center(
                   child: Text("Something went wrong"),
                 );
               }
               if (snapshot.connectionState == ConnectionState.waiting) {
                 print("waiting for data");
-                return Center(
-                  child: Text("Waiting..."),
-                );
+                return CircularProgressIndicator();
               }
+              if (snapshot.hasData) {
+                return ListView.builder(
+                    padding:
+                        const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
+                    itemCount: snapshot.data.docs.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      DocumentSnapshot documentSnapshot =
+                          snapshot.data.docs[index];
 
-              return ListView.builder(
-                  padding:
-                      const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
-                  itemCount: snapshot.data.docs.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    DocumentSnapshot documentSnapshot =
-                        snapshot.data.docs[index];
+                      Actualites actualites = Actualites(
+                          "",
+                          documentSnapshot.data()["Title"],
+                          documentSnapshot.data()["Description"],
+                          documentSnapshot.data()["Author"],
+                          documentSnapshot.data()["DatePosted"],
+                          documentSnapshot.data()["ImageUrl"],
+                          documentSnapshot.data()["Link"]);
 
-                    Actualites actualites = Actualites(
-                        "",
-                        documentSnapshot.data()["Title"],
-                        documentSnapshot.data()["Description"],
-                        documentSnapshot.data()["Author"],
-                        documentSnapshot.data()["DatePosted"],
-                        documentSnapshot.data()["ImageUrl"],
-                        documentSnapshot.data()["Link"]);
-
-                    return Container(
-                      child: Column(
-                        children: [
-                          TappableTravelDestinationItem(
-                              destination: actualites, shape: _shape),
-                        ],
-                      ),
-                    );
-                  });
+                      return Container(
+                        child: Column(
+                          children: [
+                            TappableTravelDestinationItem(
+                                destination: actualites, shape: _shape),
+                          ],
+                        ),
+                      );
+                    });
+              }
+              return Center(child: CircularProgressIndicator());
             }),
       ),
     );
@@ -377,5 +379,20 @@ class _DetailsInformationsState extends State<DetailsInformations> {
   @override
   void initState() {
     super.initState();
+  }
+
+  Future<DocumentSnapshot> getData() async {
+    QuerySnapshot querySnapshot;
+    await Firebase.initializeApp();
+    print('out of loop get data');
+    querySnapshot = await FirebaseFirestore.instance
+        .collection("News")
+        .orderBy('DatePosted', descending: true)
+        .limit(10)
+        .get();
+    if (querySnapshot != null && querySnapshot.size > 0) {
+      print(querySnapshot.toString());
+    }
+    return null;
   }
 }

@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DatabaseManager {
-  final CollectionReference profileList = Firestore.instance.collection('News');
+  final CollectionReference profileList =
+      FirebaseFirestore.instance.collection('News').orderBy('DatePosted');
 
   Future<void> createUserData(
       String name, String gender, int score, String uid) async {
@@ -13,7 +14,7 @@ class DatabaseManager {
   Future updateUserList(
       String name, String gender, int score, String uid) async {
     return await profileList
-        .document(uid)
+        .doc(uid)
         .updateData({'name': name, 'gender': gender, 'score': score});
   }
 
@@ -21,8 +22,8 @@ class DatabaseManager {
     List itemsList = [];
 
     try {
-      await profileList.getDocuments().then((querySnapshot) {
-        querySnapshot.documents.forEach((element) {
+      await profileList.get().then((querySnapshot) {
+        querySnapshot.docs.forEach((element) {
           itemsList.add(element.data());
         });
       });

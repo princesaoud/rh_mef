@@ -39,6 +39,11 @@ dependencies:
   permission_handler: ^5.0.1+1
   shared_preferences: ^0.5.12+4
   webview_flutter: ^1.0.7
+  flutter_local_notifications: ^3.0.2
+  uuid: ^2.2.2
+  http: ^0.12.2
+
+
 
 
 dev_dependencies:

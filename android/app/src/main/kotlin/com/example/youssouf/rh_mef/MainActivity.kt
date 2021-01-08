@@ -1,4 +1,4 @@
-package com.example.youssouf.rh_mef
+package com.example.youssouf.rhMef
 
 import io.flutter.embedding.android.FlutterActivity
 

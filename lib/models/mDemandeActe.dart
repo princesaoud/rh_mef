@@ -11,21 +11,28 @@ class DemandeActe {
   String natureActe = "Choisir la nature de l'acte";
   String pieceJointe = "Ajouter une piece jointe";
   String motif = "Choisir le motif";
-
+  String numeroDemande;
+  int statuts;
+  String deviceId;
   DemandeActe(
-      this.key,
-      this.matricule,
-      this.nom,
-      this.telephone,
-      this.email,
-      this.datePriseService,
-      this.emploi,
-      this.natureActe,
-      this.pieceJointe,
-      this.motif);
+    this.key,
+    this.deviceId,
+    this.matricule,
+    this.nom,
+    this.telephone,
+    this.email,
+    this.datePriseService,
+    this.emploi,
+    this.natureActe,
+    this.pieceJointe,
+    this.motif,
+    this.numeroDemande,
+    this.statuts,
+  );
 
   DemandeActe.fromSnapshot(DataSnapshot snapshot)
       : key = snapshot.key,
+        deviceId = snapshot.value["deviceId"],
         matricule = snapshot.value["matricule"],
         nom = snapshot.value["nom"],
         telephone = snapshot.value["telephone"],
@@ -34,15 +41,18 @@ class DemandeActe {
         emploi = snapshot.value["emploi"],
         natureActe = snapshot.value["natureActe"],
         pieceJointe = snapshot.value["pieceJointe"],
-        motif = snapshot.value["motif"];
+        numeroDemande = snapshot.value["numeroDemande"],
+        motif = snapshot.value["motif"],
+        statuts = snapshot.value["statuts"];
 
   @override
   String toString() {
-    return 'DemandeActe{key: $key, matricule: $matricule, nom: $nom, telephone: $telephone, email: $email, datePriseService: $datePriseService, emploi: $emploi, natureActe: $natureActe, pieceJointe: $pieceJointe, motif: $motif}';
+    return 'DemandeActe{key: $key, matricule: $matricule, nom: $nom, telephone: $telephone, email: $email, datePriseService: $datePriseService, emploi: $emploi, natureActe: $natureActe, pieceJointe: $pieceJointe, motif: $motif, numeroDemande: $numeroDemande, statuts: $statuts, deviceId: $deviceId}';
   }
 
   toJson() {
     return {
+      "deviceId": deviceId,
       "matricule": matricule,
       "nom": nom,
       "telephone": telephone,
@@ -51,6 +61,7 @@ class DemandeActe {
       "natureActe": natureActe,
       "pieceJointe": pieceJointe,
       "motif": motif,
+      "numeroDemande": numeroDemande,
     };
   }
 }
