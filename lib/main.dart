@@ -3,8 +3,9 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:rh_mef/HomeStateFullWidget.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:rh_mef/constantes.dart';
 import 'package:rh_mef/view/complaint.dart';
 import 'package:rh_mef/view/demande_dactes.dart';
@@ -13,9 +14,11 @@ import 'package:rh_mef/view/detailsInformation.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   // await Firebase.initializeApp();
+  print("main method called");
   runApp(MyApp());
 }
 
+// ignore: must_be_immutable
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
@@ -24,19 +27,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'RHMEF ONLINE',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
         primarySwatch: Colors.orange,
-        // This makes the visual density adapt to the platform that you run
-        // the app on. For desktop platforms, the controls will be smaller and
-        // closer together (more dense) than on mobile platforms.
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: MyHomePage(title: 'DRH MEF ONLINE '),
@@ -46,18 +37,7 @@ class MyApp extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
   final String title;
-
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
@@ -65,48 +45,81 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
   final GlobalKey<ScaffoldState> _drawerKey = GlobalKey();
-
-  void _openDrawer(_) {
-    _drawerKey.currentState.openDrawer();
-  }
-
-  int _selectedIndex = 0;
-  static const TextStyle optionStyle =
-      TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
-  static List<Widget> _widgetOptions = <Widget>[
-    HomeStateFull(),
-    Complaint(),
-    Text(
-      'Index 2: A Propos',
-      style: optionStyle,
-    ),
-  ];
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
   @override
   void initState() {
     // WidgetsBinding.instance.addPostFrameCallback(_openDrawer);
     super.initState();
 
+    var androidInitilize = new AndroidInitializationSettings('ic_launcher');
+    var iOSinitilize = IOSInitializationSettings(
+        onDidReceiveLocalNotification: onDidReceiveLocalNotification);
+    var initilizationsSettings = new InitializationSettings(
+        android: androidInitilize, iOS: iOSinitilize);
+    flutterLocalNotificationsPlugin = new FlutterLocalNotificationsPlugin();
+    flutterLocalNotificationsPlugin.initialize(initilizationsSettings,
+        onSelectNotification: notificationSelected);
+
     if (Platform.isAndroid) {
       firebaseCloudMessaging_Listeners();
     }
+  }
+
+  Future onDidReceiveLocalNotification(
+      int id, String title, String body, String payload) async {
+    // display a dialog with the notification details, tap ok to go to another page
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => CupertinoAlertDialog(
+        title: Text(title),
+        content: Text(body),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            child: Text('Ok'),
+            onPressed: () async {
+              Navigator.of(context, rootNavigator: true).pop();
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MyApp(),
+                ),
+              );
+            },
+          )
+        ],
+      ),
+    );
+  }
+
+  Future notificationSelected(String payload) async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text("Notification Clicked $payload"),
+      ),
+    );
   }
 
   @override
   void didUpdateWidget(covariant MyHomePage oldWidget) {
     // TODO: implement didUpdateWidget
     super.didUpdateWidget(oldWidget);
-    print("called didUpdateWidget()");
-    var database = FirebaseFirestore.instance
-        .collection("ActeDemand")
-        .get()
-        .then((querySnapshot) => {
-              querySnapshot.docs.forEach((element) {
-                print(element.data()['statuts']);
-              })
-            });
+  }
 
-    print(database);
+  Future _showNotification() async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+            'your channel id', 'your channel name', 'your channel description',
+            importance: Importance.max,
+            priority: Priority.high,
+            showWhen: false);
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.show(
+        0, 'plain title', 'plain body', platformChannelSpecifics,
+        payload: 'item x');
   }
 
   @override
@@ -114,6 +127,19 @@ class _MyHomePageState extends State<MyHomePage> {
     // TODO: implement dispose
     super.dispose();
     print("dispose called");
+    FirebaseFirestore.instance
+        .collection("ActeDemand")
+        .get()
+        .then((querySnapshot) => {
+              querySnapshot.docs.forEach((element) {
+                bool isNotification = element.data()['isNotification'];
+                if (isNotification != null && isNotification == true) {
+                  print('Notification should be call here');
+                  _showNotification();
+                }
+                print('isNotification $isNotification');
+              })
+            });
   }
 
   void firebaseCloudMessaging_Listeners() {
@@ -134,11 +160,11 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
+  // void _onItemTapped(int index) {
+  //   setState(() {
+  //     _selectedIndex = index;
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -233,6 +259,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         //   context,
                         //   MaterialPageRoute(builder: (context) => SelectFileSys()),
                         // );
+                        _showNotification();
                         Navigator.pop(context);
                       },
                     ),
@@ -240,43 +267,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
             ),
-            //TODO: BottomBar navigation
-            // bottomNavigationBar: BottomNavigationBar(
-            //   items: const <BottomNavigationBarItem>[
-            //     BottomNavigationBarItem(
-            //       icon: Icon(Icons.home),
-            //       label: 'Home',
-            //     ),
-            //     BottomNavigationBarItem(
-            //       icon: Icon(Icons.message),
-            //       label: 'Suggestion',
-            //     ),
-            //     BottomNavigationBarItem(
-            //       icon: Icon(Icons.info),
-            //       label: 'A Propos',
-            //     ),
-            //   ],
-            //   currentIndex: _selectedIndex,
-            //   selectedItemColor: Colors.amber[800],
-            //   onTap: _onItemTapped,
-            // ),
-            // This trailing comma makes auto-formatting nicer for build methods.
           );
         }
         return CircularProgressIndicator();
       },
     );
-  }
-
-  void selectAction(String value) {
-    if (value == Constants.settings) {
-      print(value);
-    } else if (value == Constants.dmd_act) {
-      print(value);
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => Demande_Actes()),
-      );
-    }
   }
 }

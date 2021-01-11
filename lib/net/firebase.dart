@@ -55,6 +55,7 @@ Future<void> demandeActeSetup(DemandeActe _demandeacte) async {
       'statuts': _demandeacte.statuts,
       'numeroDemande': numeroDemande,
       'updated': DateTime.now(),
+      'isNotification': true,
     });
     // bool pushNotification = await callOnFcmApiSendPushNotifications(token);
   });
@@ -93,26 +94,7 @@ Future<void> retriveData() async {
   print(mapEventData);
 }
 
-Future<List<Actualites>> retriveDataSecondWay() async {
-  final CollectionReference profileList = Firestore.instance.collection("News");
-  List itemsList = [];
-  List<Actualites> list_actualites = [];
-  try {
-    await profileList.getDocuments().then((querySnapshot) {
-      querySnapshot.documents.forEach((element) {
-        Actualites actualites;
-        actualites.title = element.data()["Title"];
-        actualites.subtitle = element.data()["Description"];
-        actualites.published_date = element.data()["DatePosted"];
-        list_actualites.add(actualites);
-      });
-    });
-    return list_actualites;
-  } catch (e) {
-    print(e.toString());
-    return null;
-  }
-}
+// sendLocalNotification() {}
 
 Future<bool> callOnFcmApiSendPushNotifications(
     String userToken, String description) async {

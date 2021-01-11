@@ -65,9 +65,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   String pickedActes = "Click pour Choisir votre actes";
   String pickedPiecesJointe = "Ajouter une piece jointes";
   String pickedMotif = "Click Pour ajouter une motif";
-  DateTime _dateTime;
 
-  String _currentValueSelected = "...";
   String mDeviceToken;
 
   //TODO: DECLARE VARIABLE FOR FILE HANDLING SYSTEM
@@ -152,103 +150,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     super.dispose();
   }
 
-  Future<void> _showDropList(List<String> list, int type) async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Dropdown'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                DropdownButton(
-                  items: list.map((String value) {
-                    return DropdownMenuItem<String>(
-                      onTap: () {
-                        _currentValueSelected = value;
-                        if (type == 1) {
-                          setState(() {
-                            pickedEmploi = value;
-                          });
-                        } else if (type == 2) {
-                          setState(() {
-                            pickedActes = value;
-                          });
-                        } else if (type == 4) {
-                          setState(() {
-                            pickedMotif = value;
-                          });
-                        }
-                        print(_currentValueSelected);
-                        Navigator.of(context).pop();
-                      },
-                      child: new Text(value),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    _currentValueSelected = value;
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(""),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _showDatePicker() async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(Constants.choisirDate),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Container(
-                  height: 200,
-                  child: CupertinoDatePicker(
-                    mode: CupertinoDatePickerMode.date,
-                    maximumDate: DateTime.now(),
-                    initialDateTime: DateTime(2000, 1, 1),
-                    onDateTimeChanged: (DateTime newDateTime) {
-                      // Do something
-                      // datePicked = newDateTime.toString();
-                      setState(() {
-                        _dateTime = newDateTime;
-                      });
-                      datePicked = DateFormat('dd-MM-yyyy').format(_dateTime);
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(Constants.valider),
-              onPressed: () {
-                datePicked = DateFormat('yyyy-MM-dd').format(_dateTime);
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   void _onSearchChanged() {
     print(myControllerSearch.value.text);
   }
@@ -267,7 +168,7 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
   final myControllerSearch = TextEditingController();
   String datePicked = "Click pour date de prise de service (MEF)";
   String pickedEmploi = "Click Pour choisir votre emploi";
-  String pickedActes = "Click pour Choisir votre actes";
+  String pickedActes = "Click pour choisir votre actes";
   String pickedPiecesJointe = "Ajouter une piece jointes";
   String pickedMotif = "Click Pour ajouter une motif";
   DateTime _dateTime;
@@ -411,7 +312,8 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
                     piece,
                     motif,
                     numeroDemande,
-                    0);
+                    0,
+                    true);
                 demandeActeSetup(_demandeacte);
                 print('demande d\'acte envoye');
                 String description =

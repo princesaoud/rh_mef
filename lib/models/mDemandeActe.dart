@@ -14,21 +14,22 @@ class DemandeActe {
   String numeroDemande;
   int statuts;
   String deviceId;
+  bool isNotification;
   DemandeActe(
-    this.key,
-    this.deviceId,
-    this.matricule,
-    this.nom,
-    this.telephone,
-    this.email,
-    this.datePriseService,
-    this.emploi,
-    this.natureActe,
-    this.pieceJointe,
-    this.motif,
-    this.numeroDemande,
-    this.statuts,
-  );
+      this.key,
+      this.deviceId,
+      this.matricule,
+      this.nom,
+      this.telephone,
+      this.email,
+      this.datePriseService,
+      this.emploi,
+      this.natureActe,
+      this.pieceJointe,
+      this.motif,
+      this.numeroDemande,
+      this.statuts,
+      this.isNotification);
 
   DemandeActe.fromSnapshot(DataSnapshot snapshot)
       : key = snapshot.key,
@@ -43,11 +44,12 @@ class DemandeActe {
         pieceJointe = snapshot.value["pieceJointe"],
         numeroDemande = snapshot.value["numeroDemande"],
         motif = snapshot.value["motif"],
-        statuts = snapshot.value["statuts"];
+        statuts = snapshot.value["statuts"],
+        isNotification = snapshot.value["isNotification"];
 
   @override
   String toString() {
-    return 'DemandeActe{key: $key, matricule: $matricule, nom: $nom, telephone: $telephone, email: $email, datePriseService: $datePriseService, emploi: $emploi, natureActe: $natureActe, pieceJointe: $pieceJointe, motif: $motif, numeroDemande: $numeroDemande, statuts: $statuts, deviceId: $deviceId}';
+    return 'DemandeActe{key: $key, matricule: $matricule, nom: $nom, telephone: $telephone, email: $email, datePriseService: $datePriseService, emploi: $emploi, natureActe: $natureActe, pieceJointe: $pieceJointe, motif: $motif, numeroDemande: $numeroDemande, statuts: $statuts, deviceId: $deviceId, isNotification: $isNotification}';
   }
 
   toJson() {
@@ -62,6 +64,7 @@ class DemandeActe {
       "pieceJointe": pieceJointe,
       "motif": motif,
       "numeroDemande": numeroDemande,
+      "isNotification": isNotification,
     };
   }
 }
