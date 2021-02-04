@@ -329,7 +329,11 @@ class _DetailsInformationsState extends State<DetailsInformations> {
       // ),
       body: Scrollbar(
         child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('News').snapshots(),
+            stream: FirebaseFirestore.instance
+                .collection('News')
+                .orderBy('DatePosted', descending: true)
+                .limit(10)
+                .snapshots(),
             builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
               if (snapshot.hasError) {
                 print("Something went wrong");
@@ -340,7 +344,7 @@ class _DetailsInformationsState extends State<DetailsInformations> {
               }
               if (snapshot.connectionState == ConnectionState.waiting) {
                 print("waiting for data");
-                return CircularProgressIndicator();
+                return Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasData) {
                 return ListView.builder(

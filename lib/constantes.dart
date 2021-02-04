@@ -8,8 +8,9 @@ class Constants {
   static const String choisirDate = "Choissez votre date";
   static const String adminText = "Add News Actualites";
   static const String adminDemandeActe = "Manage Demande Acte";
+  static const String retraite = "Retraite";
   static const String firebaseTokenAPIFCM =
-      "AAAAaawcmpI:APA91bEeT9AILBkw6qHzJji5GDPLM6hmqNKg15PRiQOxVeL51G1E3_JJreqWNOMqQmTY5wuysN3Bpvb7WrJVDVQz6LkG-B-jquU7aDP4SqMHndLy7tztuUyByGJHyJ1kxEzDLusNUhMo";
+      "AAAAR6DYor0:APA91bGhIR4vvES3PYt81btU9U0YKXMt4iWY4xWdMghfKj95_nz3qsO4oHAUKxTeoWpv8Bs0zeVEI7g_0OU5SWi9Ev6GVGqFwwDs2vTpI2VVOr5q3p3tSZRe0ztlyf3j8mx7WGk13w2J";
   static const String prefs_imageName = "imageName";
 
   static const List<String> choices = <String>[settings, dmd_act];
@@ -19,15 +20,17 @@ class Constants {
   ];
 
   static const List<String> list_actes = <String>[
-    "ATTESTATION DE TRAVAIL",
-    "ATTESTATION DE PRESENCE",
-    "ATTESTATION DE PRESENCE SOLDE"
+    "PRESENCE DE SOLDE",
+    "TRAVAIL",
+    "PRESENCE",
+    "PRESENCE SOLDE"
   ];
+  static const List<int> list_actes_code = <int>[001, 002, 003, 004];
   static const List<String> list_motifs = <String>[
-    "POUR COMPLEMENT DOSSIER ADMINISTRATIF",
-    "POUR COMPLEMENT DOSSIER BANCAIRE",
-    "POUR COMPLEMENT DOSSIER DEMANDE DE VISA",
-    "POUR COMPLEMENT DOSSIER DE RETRAITE",
-    "POUR COMPLEMENT DE DOSSIER DE CONCOURS",
+    "ADMINISTRATIF",
+    "DOSSIER BANCAIRE",
+    "DOSSIER DEMANDE DE VISA",
+    "DOSSIER DE RETRAITE",
+    "DE DOSSIER DE CONCOURS",
   ];
 }

@@ -10,13 +10,40 @@ import 'package:rh_mef/constantes.dart';
 import 'package:rh_mef/view/complaint.dart';
 import 'package:rh_mef/view/demande_dactes.dart';
 import 'package:rh_mef/view/detailsInformation.dart';
+import 'package:rh_mef/view/retraiteProcedure.dart';
+import 'package:twilio_flutter/twilio_flutter.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // await Firebase.initializeApp();
-  print("main method called");
+  //TODO: Background task initialization and setup
+  // Workmanager.initialize(
+  //     callbackDispatcher, // The top level function, aka callbackDispatcher
+  //     isInDebugMode:
+  //         true // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
+  //     );
+  // Workmanager.registerPeriodicTask(
+  //   "2",
+  //   "simplePeriodicTask",
+  //   // When no frequency is provided the default 15 minutes is set.
+  //   // Minimum frequency is 15 min. Android will automatically change your frequency to 15 min if you have configured a lower frequency.
+  //   frequency: Duration(seconds: 5),
+  // );
+  await Firebase.initializeApp();
+  FirebaseMessaging().getToken().then((token) async {
+    await FirebaseFirestore.instance
+        .collection("tokens")
+        .doc(token)
+        .set({'token': token});
+  });
   runApp(MyApp());
 }
+
+// void callbackDispatcher() {
+//   Workmanager.executeTask((task, inputData) {
+//     print("Native called background task: "); //simpleTask will be emitted here.
+//     return Future.value(true);
+//   });
+// }
 
 // ignore: must_be_immutable
 class MyApp extends StatelessWidget {
@@ -25,7 +52,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'RHMEF ONLINE',
+      title: 'DRHMEF ONLINE',
       theme: ThemeData(
         primarySwatch: Colors.orange,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -46,13 +73,20 @@ class _MyHomePageState extends State<MyHomePage> {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
   final GlobalKey<ScaffoldState> _drawerKey = GlobalKey();
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+  TwilioFlutter twilioFlutter;
 
   @override
   void initState() {
     // WidgetsBinding.instance.addPostFrameCallback(_openDrawer);
+
+    twilioFlutter = TwilioFlutter(
+        accountSid: 'AC4cb8ad07e86ad04b7cd18a2737796b3d',
+        authToken: '9c1202163f062c18f0b29a2e3a4a7e30',
+        twilioNumber: '+14103767481');
     super.initState();
 
-    var androidInitilize = new AndroidInitializationSettings('ic_launcher');
+    var androidInitilize =
+        new AndroidInitializationSettings('@mipmap/ic_launcher');
     var iOSinitilize = IOSInitializationSettings(
         onDidReceiveLocalNotification: onDidReceiveLocalNotification);
     var initilizationsSettings = new InitializationSettings(
@@ -62,7 +96,8 @@ class _MyHomePageState extends State<MyHomePage> {
         onSelectNotification: notificationSelected);
 
     if (Platform.isAndroid) {
-      firebaseCloudMessaging_Listeners();
+      print('android platform');
+      firebaseCloudMessagingListeners();
     }
   }
 
@@ -108,17 +143,19 @@ class _MyHomePageState extends State<MyHomePage> {
     super.didUpdateWidget(oldWidget);
   }
 
-  Future _showNotification() async {
+  Future _showNotification(
+      int id, String channelName, String description) async {
+    print(description);
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-            'your channel id', 'your channel name', 'your channel description',
+            'channelId', 'channelName', 'channelDescription',
             importance: Importance.max,
             priority: Priority.high,
             showWhen: false);
     const NotificationDetails platformChannelSpecifics =
         NotificationDetails(android: androidPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.show(
-        0, 'plain title', 'plain body', platformChannelSpecifics,
+        id, 'plain title', '$description', platformChannelSpecifics,
         payload: 'item x');
   }
 
@@ -126,36 +163,22 @@ class _MyHomePageState extends State<MyHomePage> {
   void dispose() {
     // TODO: implement dispose
     super.dispose();
-    print("dispose called");
-    FirebaseFirestore.instance
-        .collection("ActeDemand")
-        .get()
-        .then((querySnapshot) => {
-              querySnapshot.docs.forEach((element) {
-                bool isNotification = element.data()['isNotification'];
-                if (isNotification != null && isNotification == true) {
-                  print('Notification should be call here');
-                  _showNotification();
-                }
-                print('isNotification $isNotification');
-              })
-            });
   }
 
-  void firebaseCloudMessaging_Listeners() {
-    _firebaseMessaging.getToken().then((token) {
-      // print("token of the device is : $token");
-    });
-
+  void firebaseCloudMessagingListeners() {
     _firebaseMessaging.configure(
       onMessage: (Map<String, dynamic> message) async {
         print('on message $message');
+        _showNotification(1, 'onMessage', 'xyz');
+        return;
       },
       onResume: (Map<String, dynamic> message) async {
         print('on resume $message');
+        await _showNotification(2, 'onResume', 'efg');
       },
       onLaunch: (Map<String, dynamic> message) async {
         print('on launch $message');
+        await _showNotification(3, 'onLaunch', message['data']);
       },
     );
   }
@@ -170,10 +193,6 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return FutureBuilder(
       future: Firebase.initializeApp(),
       builder: (context, snapshot) {
@@ -249,6 +268,21 @@ class _MyHomePageState extends State<MyHomePage> {
                       },
                     ),
                     ListTile(
+                      title: Text(Constants.retraite),
+                      leading: Icon(Icons.assistant),
+                      onTap: () {
+                        // Update the state of the app
+                        // ...
+                        // Then close the drawer
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => RetraiteProccedure()),
+                        );
+                        // Navigator.pop(context);
+                      },
+                    ),
+                    ListTile(
                       title: Text(Constants.infos),
                       leading: Icon(Icons.info),
                       onTap: () {
@@ -257,10 +291,11 @@ class _MyHomePageState extends State<MyHomePage> {
                         // Then close the drawer
                         // Navigator.push(
                         //   context,
-                        //   MaterialPageRoute(builder: (context) => SelectFileSys()),
+                        //   MaterialPageRoute(
+                        //       builder: (context) => StatutsDemande()),
                         // );
-                        _showNotification();
-                        Navigator.pop(context);
+                        // sendSms();
+                        _showNotification(1, 'abc', 'efg');
                       },
                     ),
                   ],

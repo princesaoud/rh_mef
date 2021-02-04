@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:rh_mef/constantes.dart';
 import 'package:rh_mef/models/actualites_type.dart';
 import 'package:rh_mef/models/mDemandeActe.dart';
+import 'package:twilio_flutter/twilio_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 // class CustomFirebaseMangement {}
@@ -82,16 +83,6 @@ Future<void> newsSetup(Actualites actualites) async {
     'ImageUrl': actualites.imageAsset,
   });
   return;
-}
-
-Future<void> retriveData() async {
-  print('start collecting data');
-  DocumentSnapshot _ds = await FirebaseFirestore.instance
-      .collection("News")
-      .doc('djyoK75DMrMYXhIMNZI2')
-      .get();
-  Map mapEventData = _ds.data();
-  print(mapEventData);
 }
 
 // sendLocalNotification() {}
@@ -204,4 +195,8 @@ Widget statusCode(int status, int numeroDemande) {
   }
   // print(tempResult);
   return null;
+}
+
+void sendSms(TwilioFlutter twilioFlutter, String number, String message) async {
+  twilioFlutter.sendSMS(toNumber: number, messageBody: message);
 }

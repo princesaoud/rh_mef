@@ -1,33 +1,33 @@
 {
   "project_info": {
-    "project_number": "453859121810",
-    "project_id": "rhmefonline",
-    "storage_bucket": "rhmefonline.appspot.com"
+    "project_number": "1008896250092",
+    "project_id": "rhmef-f4f7d",
+    "storage_bucket": "rhmef-f4f7d.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:453859121810:android:c0f7a3fe5f9809a1f4e44b",
+        "mobilesdk_app_id": "1:1008896250092:android:9d1dc65d12eb047b5c15c9",
         "android_client_info": {
           "package_name": "com.example.youssouf.rhMef"
         }
       },
       "oauth_client": [
         {
-          "client_id": "453859121810-a6js82epaha2fv8m7a6ihm84e1dc8hka.apps.googleusercontent.com",
+          "client_id": "1008896250092-jq09pr0cfco4hoimpq2htgec13bs1ulc.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyC1s4y0Juq1ovcfFIFy1Dpw73PD15Bd5DY"
+          "current_key": "AIzaSyA4n7kL4-S4lQruvlUjzz9MJecO7jZwMpg"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "453859121810-a6js82epaha2fv8m7a6ihm84e1dc8hka.apps.googleusercontent.com",
+              "client_id": "1008896250092-jq09pr0cfco4hoimpq2htgec13bs1ulc.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

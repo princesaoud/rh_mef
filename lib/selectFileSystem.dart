@@ -47,9 +47,11 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           (imageUrl != null)
-              ? Image.network(imageUrl)
+              ? Expanded(child: Image.network(imageUrl))
               : Placeholder(
                   fallbackHeight: 200.0, fallbackWidth: double.infinity),
           SizedBox(

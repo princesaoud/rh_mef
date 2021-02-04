@@ -10,6 +10,7 @@ import 'package:rh_mef/main.dart';
 import 'package:rh_mef/models/mDemandeActe.dart';
 import 'package:rh_mef/net/firebase.dart';
 import 'package:rh_mef/selectFileSystem.dart';
+import 'package:rh_mef/view/statutsDeliveryDemande.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// This is the main application widget.
@@ -114,8 +115,28 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                         int numeroDemande =
                             documentSnapshot.data()['numeroDemande'];
                         //TODO: work on the where clause
-                        return statusCode(
-                            documentSnapshot.data()['statuts'], numeroDemande);
+                        return TextButton(
+                          onPressed: () async {
+                            SharedPreferences sharedprefs =
+                                await SharedPreferences.getInstance();
+                            sharedprefs.setInt('numeroDemande',
+                                documentSnapshot.data()['numeroDemande']);
+                            List<String> listSteps = [
+                              'step one ',
+                              'step two',
+                              'step three',
+                              'step four'
+                            ];
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      StatutsDemande(listSteps)),
+                            );
+                          },
+                          child: statusCode(documentSnapshot.data()['statuts'],
+                              numeroDemande),
+                        );
                       }
                       return Container();
                     });
@@ -240,34 +261,69 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
             onTap: () {
               _showDropList(Constants.list_emplois, 1);
             },
-            leading: const Icon(Icons.person_outline_sharp),
+            leading: const Icon(Icons.format_align_justify_outlined),
             title: new Text(pickedEmploi),
           ),
           new ListTile(
             onTap: () {
-              _showDropList(Constants.list_actes, 2);
+              FutureBuilder(
+                future:
+                    FirebaseFirestore.instance.collection("ActeLists").get(),
+                builder: (BuildContext context, snapshot) {
+                  DocumentSnapshot documentSnapshot = snapshot.data.docs;
+                  // List listActes = documentSnapshot;
+                  print(documentSnapshot.data());
+                  return;
+                },
+              );
+              // _showDropList(Constants.list_actes, 2);
             },
-            leading: const Icon(Icons.person),
+            leading: const Icon(Icons.file_copy),
             title: Text(pickedActes),
           ),
+          new TextButton(
+            onPressed: () async {
+              SharedPreferences prefs = await SharedPreferences.getInstance();
+              prefs.setString(
+                  Constants.prefs_imageName, DateTime.now().toString());
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SelectFileSys()),
+              );
+            },
+            child: Container(
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        child: Icon(
+                          Icons.photo_camera_outlined,
+                          color: Colors.grey,
+                        ),
+                        padding: EdgeInsets.only(left: 10),
+                      ),
+                      Container(
+                        child: Text(
+                          pickedPiecesJointe,
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        padding: EdgeInsets.only(left: 30),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
           new ListTile(
-              onTap: () async {
-                SharedPreferences prefs = await SharedPreferences.getInstance();
-                prefs.setString(
-                    Constants.prefs_imageName, DateTime.now().toString());
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SelectFileSys()),
-                );
-              },
-              leading: const Icon(Icons.photo_camera_outlined),
-              title: Text(pickedPiecesJointe)),
-          ListTile(
-              onTap: () {
-                _showDropList(Constants.list_motifs, 4);
-              },
-              leading: Icon(Icons.message_rounded),
-              title: Text(pickedMotif)),
+            onTap: () {
+              _showDropList(Constants.list_motifs, 4);
+            },
+            leading: Icon(Icons.message_rounded),
+            title: Text('Motifs'),
+            subtitle: Text(pickedMotif),
+          ),
           const Divider(
             height: 2.0,
           ),
@@ -322,6 +378,7 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
                     .collection('adminKey')
                     .doc('key')
                     .toString();
+                successDialog(context, 'Votre demande est envoyé avec succès');
                 callOnFcmApiSendPushNotifications(userToken, description);
                 Navigator.pushReplacement(
                     context, MaterialPageRoute(builder: (context) => MyApp()));
@@ -337,40 +394,45 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
   Future<void> _showDropList(List<String> list, int type) async {
     return showDialog<void>(
       context: context,
-      barrierDismissible: false, // user must tap button!
+      barrierDismissible: true, // user must tap button!
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Dropdown'),
+          title: Text('Choisir dans la liste '),
+          elevation: 2,
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                DropdownButton(
-                  items: list.map((String value) {
-                    return DropdownMenuItem<String>(
-                      onTap: () {
+                Wrap(
+                  children: [
+                    DropdownButton(
+                      items: list.map((String value) {
+                        return DropdownMenuItem<String>(
+                          onTap: () {
+                            _currentValueSelected = "$value";
+                            if (type == 1) {
+                              setState(() {
+                                pickedEmploi = "$value";
+                              });
+                            } else if (type == 2) {
+                              setState(() {
+                                pickedActes = "DEMANDE $value";
+                              });
+                            } else if (type == 4) {
+                              setState(() {
+                                pickedMotif = "POUR COMPLEMENT DOSSIER $value";
+                              });
+                            }
+                            // print(_currentValueSelected);
+                            Navigator.of(context).pop();
+                          },
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
                         _currentValueSelected = value;
-                        if (type == 1) {
-                          setState(() {
-                            pickedEmploi = value;
-                          });
-                        } else if (type == 2) {
-                          setState(() {
-                            pickedActes = value;
-                          });
-                        } else if (type == 4) {
-                          setState(() {
-                            pickedMotif = value;
-                          });
-                        }
-                        print(_currentValueSelected);
-                        Navigator.of(context).pop();
                       },
-                      child: new Text(value),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    _currentValueSelected = value;
-                  },
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -421,7 +483,7 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
             TextButton(
               child: Text(Constants.valider),
               onPressed: () {
-                datePicked = DateFormat('yyyy-MM-dd').format(_dateTime);
+                datePicked = DateFormat('dd-MM-yyyy').format(_dateTime);
                 Navigator.of(context).pop();
               },
             ),
