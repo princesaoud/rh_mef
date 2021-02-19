@@ -25,38 +25,41 @@ class DocumentSelected extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
       ),
-      body: ListView.builder(
-        itemCount: listDocuments.length,
-        itemBuilder: (BuildContext context, int index) {
-          return Card(
-            child: Container(
-              height: 100,
-              child: Padding(
-                padding: const EdgeInsets.all(15.0),
-                child: Row(
-                  children: [
-                    Text(
-                      '$index',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                    ),
-                    Expanded(
-                      child: Text(
-                        '${listDocuments[index]}',
-                        style: TextStyle(fontSize: 20),
-                        textAlign: TextAlign.center,
+      body: Card(
+        child: ListView.builder(
+          itemCount: listDocuments.length,
+          itemBuilder: (BuildContext context, int index) {
+            return Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      // Text(
+                      //   '$index',
+                      //   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      // ),
+                      Expanded(
+                        child: Text(
+                          '${listDocuments[index]}',
+                          style: TextStyle(fontSize: 20),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                    ),
-                    Icon(
-                      Icons.radio_button_unchecked,
-                      color: Colors.blue,
-                    ),
-                  ],
-                ),
+                      // Icon(
+                      //   Icons.radio_button_unchecked,
+                      //   color: Colors.blue,
+                      // ),
+                    ],
+                  ),
+                  Divider(
+                    thickness: 3,
+                  )
+                ],
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

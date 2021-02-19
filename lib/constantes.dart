@@ -10,7 +10,7 @@ class Constants {
   static const String adminDemandeActe = "Manage Demande Acte";
   static const String retraite = "Retraite";
   static const String firebaseTokenAPIFCM =
-      "AAAAR6DYor0:APA91bGhIR4vvES3PYt81btU9U0YKXMt4iWY4xWdMghfKj95_nz3qsO4oHAUKxTeoWpv8Bs0zeVEI7g_0OU5SWi9Ev6GVGqFwwDs2vTpI2VVOr5q3p3tSZRe0ztlyf3j8mx7WGk13w2J";
+      "key=AAAA6ubnEOw:APA91bFVG55VZmwhYocOK_jM9gsz1SVcJz7T1KA4gTDL3IbTWVeV1dbcy14RZe0UwULv4mbhA0kr2AlJOfZhkkFcZy-D2b5PNWHeYGYsy4DDPw0g_i4C_WhP8RoGyL9_UN8heEatl-w5";
   static const String prefs_imageName = "imageName";
 
   static const List<String> choices = <String>[settings, dmd_act];

@@ -7,15 +7,15 @@ class DatabaseManager {
   Future<void> createUserData(
       String name, String gender, int score, String uid) async {
     return await profileList
-        .document(uid)
-        .setData({'name': name, 'gender': gender, 'score': score});
+        .doc(uid)
+        .set({'name': name, 'gender': gender, 'score': score});
   }
 
   Future updateUserList(
       String name, String gender, int score, String uid) async {
     return await profileList
         .doc(uid)
-        .updateData({'name': name, 'gender': gender, 'score': score});
+        .update({'name': name, 'gender': gender, 'score': score});
   }
 
   Future getNewsList() async {

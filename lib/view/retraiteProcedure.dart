@@ -48,7 +48,7 @@ class _RetraiteProccedureState extends State<RetraiteProccedure> {
           icon: Icon(Icons.arrow_back),
         ),
         title: Text(
-          'Proccedure a suivre',
+          'Proccedure à suivre',
           style: TextStyle(fontSize: 20),
         ),
       ),
@@ -79,10 +79,7 @@ class _RetraiteProccedureState extends State<RetraiteProccedure> {
                         ),
                         subtitle: Text(
                             'Cliquer pour obtenir la liste des dossiers a soumettre a la fonction publique '),
-                        leading: Icon(
-                          Icons.radio_button_unchecked,
-                          color: Colors.green,
-                        ),
+                        trailing: Icon(Icons.arrow_forward_ios_outlined),
                       ),
                     ),
                   ),
@@ -90,38 +87,38 @@ class _RetraiteProccedureState extends State<RetraiteProccedure> {
               ),
             ],
           ),
-          Row(
-            children: [
-              Expanded(
-                flex: 1,
-                child: Column(
-                  // mainAxisAlignment: MainAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    Container(
-                      width: 3,
-                      height: 50,
-                      decoration: new BoxDecoration(
-                        color: Colors.black,
-                        shape: BoxShape.rectangle,
-                      ),
-                      child: Text(""),
-                    ),
-                    Container(
-                      width: 18,
-                      height: 18,
-                      decoration: new BoxDecoration(
-                        color: Colors.black,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(""),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          // Row(
+          //   children: [
+          //     Expanded(
+          //       flex: 1,
+          //       child: Column(
+          //         // mainAxisAlignment: MainAxisAlignment.start,
+          //         mainAxisSize: MainAxisSize.min,
+          //         crossAxisAlignment: CrossAxisAlignment.center,
+          //         children: <Widget>[
+          //           Container(
+          //             width: 3,
+          //             height: 50,
+          //             decoration: new BoxDecoration(
+          //               color: Colors.black,
+          //               shape: BoxShape.rectangle,
+          //             ),
+          //             child: Text(""),
+          //           ),
+          //           Container(
+          //             width: 18,
+          //             height: 18,
+          //             decoration: new BoxDecoration(
+          //               color: Colors.black,
+          //               shape: BoxShape.circle,
+          //             ),
+          //             child: Text(""),
+          //           ),
+          //         ],
+          //       ),
+          //     ),
+          //   ],
+          // ),
           Card(
             child: Container(
               color: Colors.white30,
@@ -144,9 +141,8 @@ class _RetraiteProccedureState extends State<RetraiteProccedure> {
                   ),
                   subtitle: Text(
                       'Cliquer pour obtenir la liste des dossiers a soumettre a la CGRAE '),
-                  leading: Icon(
-                    Icons.radio_button_unchecked,
-                    color: Colors.green,
+                  trailing: Icon(
+                    Icons.arrow_forward_ios_outlined,
                   ),
                 ),
               ),

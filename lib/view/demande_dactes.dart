@@ -8,10 +8,13 @@ import 'package:flutter/widgets.dart';
 import 'package:rh_mef/constantes.dart';
 import 'package:rh_mef/main.dart';
 import 'package:rh_mef/models/mDemandeActe.dart';
+import 'package:rh_mef/models/stepsActe.dart';
 import 'package:rh_mef/net/firebase.dart';
 import 'package:rh_mef/selectFileSystem.dart';
 import 'package:rh_mef/view/statutsDeliveryDemande.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../models/stepsActe.dart';
 
 /// This is the main application widget.
 // ignore: camel_case_types
@@ -80,11 +83,22 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             hoverColor: Colors.green,
             padding: EdgeInsets.symmetric(vertical: 13, horizontal: 70),
             color: Colors.lightGreen,
-            onPressed: () {
+            onPressed: () async {
+              SharedPreferences prefs = await SharedPreferences.getInstance();
+              List<String> values = [
+                '${prefs.getInt('id')}',
+                '${prefs.getString('matricule')}',
+                '${prefs.getString('nom')}',
+                '${prefs.getString('cellulaire')}',
+                '${prefs.getString('email')}',
+                '${prefs.getString('date_1ere_ps')}',
+                '${prefs.getString('lib_sce')}',
+              ];
               Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => NouvelleDemandeActe()));
+                      builder: (context) =>
+                          NouvelleDemandeActe(values: values)));
             },
             child: Text("Faire une nouvelle demande"),
           ),
@@ -114,24 +128,65 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                         // print('succces');
                         int numeroDemande =
                             documentSnapshot.data()['numeroDemande'];
+                        String demandeName =
+                            documentSnapshot.data()['natureActe'];
                         //TODO: work on the where clause
                         return TextButton(
                           onPressed: () async {
+                            List<ListSteps> listsSteps = [];
+
                             SharedPreferences sharedprefs =
                                 await SharedPreferences.getInstance();
                             sharedprefs.setInt('numeroDemande',
                                 documentSnapshot.data()['numeroDemande']);
-                            List<String> listSteps = [
-                              'step one ',
-                              'step two',
-                              'step three',
-                              'step four'
-                            ];
+                            listsSteps.add(
+                              ListSteps(
+                                  title: 'Votre document a ete valide',
+                                  description:
+                                      'Vos document soumis, sont conforme et vos demande d\'acte est encours de traitement'),
+                            );
+                            listsSteps.add(
+                              ListSteps(
+                                  title:
+                                      'Votre document est complète, et peut etre retirée',
+                                  description:
+                                      'Le traitement de votre demande est effectuee avec succes, et votre document peut etre retirer avec succes'),
+                            );
+
+                            listsSteps.add(
+                              ListSteps(
+                                  title: 'Vous avez retirée votre demande',
+                                  description:
+                                      'Votre document viens d\'etre retire avec succes '),
+                            );
+                            if (demandeName
+                                .contains("Attestation de présence solde")) {
+                              // print('attestion de presence de solde is true');
+                              listsSteps.clear();
+                              listsSteps.add(ListSteps(
+                                  title: "Demande en ligne reçu",
+                                  description:
+                                      "La DRH a reçu vos document avec succes, votre dossier en cours de traitement"));
+                              listsSteps.add(ListSteps(
+                                  title:
+                                      "Votre demande necessite une signature de votre Direction",
+                                  description:
+                                      "La DRH a traité vos documents, veuillez passer les recupperer pour une signature supplementaire avant la proccedure finale"));
+                              listsSteps.add(ListSteps(
+                                  title: "La DRH a réçu vos documents signé",
+                                  description:
+                                      "Vous deposez les documents physique au sein de la DRH/MEF pour initialiser la proccedure de votre de demande"));
+                              listsSteps.add(ListSteps(
+                                  title: "Votre demande est fin prête",
+                                  description:
+                                      "Vous pouvez passer recupperer votre document"));
+                            }
+
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                   builder: (context) =>
-                                      StatutsDemande(listSteps)),
+                                      StatutsDemande(listsSteps)),
                             );
                           },
                           child: statusCode(documentSnapshot.data()['statuts'],
@@ -177,6 +232,9 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
 }
 
 class NouvelleDemandeActe extends StatefulWidget {
+  final List<String> values;
+  NouvelleDemandeActe({Key key, this.values}) : super(key: key);
+
   @override
   _NouvelleDemandeActeState createState() => _NouvelleDemandeActeState();
 }
@@ -197,6 +255,12 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
   String _currentValueSelected = "...";
   @override
   Widget build(BuildContext context) {
+    myControllerMatricule.text = '${widget.values[1]}';
+    myControllerNom.text = widget.values[2];
+    myControllerTel.text = widget.values[3];
+    myControllerEmail.text = widget.values[4];
+    datePicked = widget.values[5];
+    pickedEmploi = widget.values[6];
     return Scaffold(
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
@@ -266,21 +330,12 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
           ),
           new ListTile(
             onTap: () {
-              FutureBuilder(
-                future:
-                    FirebaseFirestore.instance.collection("ActeLists").get(),
-                builder: (BuildContext context, snapshot) {
-                  DocumentSnapshot documentSnapshot = snapshot.data.docs;
-                  // List listActes = documentSnapshot;
-                  print(documentSnapshot.data());
-                  return;
-                },
-              );
-              // _showDropList(Constants.list_actes, 2);
+              _showDropList(Constants.list_actes, 2);
             },
             leading: const Icon(Icons.file_copy),
-            title: Text(pickedActes),
+            title: new Text(pickedActes),
           ),
+          // _showDropList(Constants.list_actes, 2);
           new TextButton(
             onPressed: () async {
               SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -391,60 +446,99 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
     );
   }
 
+  formFillList(int type) {
+    switch (type) {
+      case 1:
+        return FirebaseFirestore.instance.collection('Emplois').get();
+        break;
+      case 2:
+        return FirebaseFirestore.instance.collection('DemandeActe').get();
+        break;
+      case 3:
+        return FirebaseFirestore.instance.collection('DemandeActe').get();
+        break;
+      case 4:
+        return FirebaseFirestore.instance.collection('Motifs').get();
+        break;
+    }
+  }
+
   Future<void> _showDropList(List<String> list, int type) async {
+    List<String> tempList = [];
+
     return showDialog<void>(
       context: context,
       barrierDismissible: true, // user must tap button!
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Choisir dans la liste '),
-          elevation: 2,
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Wrap(
-                  children: [
-                    DropdownButton(
-                      items: list.map((String value) {
-                        return DropdownMenuItem<String>(
-                          onTap: () {
-                            _currentValueSelected = "$value";
-                            if (type == 1) {
-                              setState(() {
-                                pickedEmploi = "$value";
-                              });
-                            } else if (type == 2) {
-                              setState(() {
-                                pickedActes = "DEMANDE $value";
-                              });
-                            } else if (type == 4) {
-                              setState(() {
-                                pickedMotif = "POUR COMPLEMENT DOSSIER $value";
-                              });
-                            }
-                            // print(_currentValueSelected);
-                            Navigator.of(context).pop();
+        return FutureBuilder(
+          future: formFillList(type),
+          builder:
+              (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+            if (snapshot == null || snapshot.data == null) {
+              return Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+            final List<DocumentSnapshot> documents = snapshot.data.docs;
+            documents.forEach((element) {
+              // print(element.get('acteName'));
+              String acteName = element.get('name');
+              var splitName = acteName.split(',');
+              print(splitName);
+              tempList.addAll(splitName);
+            });
+
+            return AlertDialog(
+              title: Text('Choisir dans la liste '),
+              elevation: 2,
+              content: SingleChildScrollView(
+                child: ListBody(
+                  children: <Widget>[
+                    Wrap(
+                      children: [
+                        DropdownButton(
+                          items: tempList.map((value) {
+                            return DropdownMenuItem<String>(
+                              onTap: () {
+                                _currentValueSelected = "$value";
+                                if (type == 1) {
+                                  setState(() {
+                                    pickedEmploi = "$value";
+                                  });
+                                } else if (type == 2) {
+                                  setState(() {
+                                    pickedActes = "$value";
+                                  });
+                                } else if (type == 4) {
+                                  setState(() {
+                                    pickedMotif = "$value";
+                                  });
+                                }
+                                // print(_currentValueSelected);
+                                Navigator.of(context).pop();
+                              },
+                              child: Text('${value.toString()}'),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            _currentValueSelected = value;
                           },
-                          child: Text(value),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        _currentValueSelected = value;
-                      },
+                        ),
+                      ],
                     ),
                   ],
                 ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text(""),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
               ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(""),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+            );
+          },
         );
       },
     );

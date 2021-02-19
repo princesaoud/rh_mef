@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:convert' as convert;
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:commons/commons.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +11,7 @@ import 'package:http/http.dart' as http;
 import 'package:rh_mef/constantes.dart';
 import 'package:rh_mef/models/actualites_type.dart';
 import 'package:rh_mef/models/mDemandeActe.dart';
+import 'package:rh_mef/models/userDetails.dart';
 import 'package:twilio_flutter/twilio_flutter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -31,6 +34,25 @@ Future<void> userSetup(String designation, String number, String email,
   return;
 }
 
+//I/flutter (23866): connection state :
+// UserDetails{id: 3798, matricule: 385186P,
+// nom: AKANGBE ADAMA AJANI, sexe: M,
+// nom_pere: AKANGBE KAFAROU, nom_mere: KOUAME AHOU AMELIE,
+// tel_domicile: 53055804, tel_bureau: ,
+// cellulaire: 09389136, adresse: 11 BP 623 ABIDJAN,
+// email: aaajani25@gmail.com, sitmat: null,
+// date_nais: 03/03/1983, lieu_nais: M'BAHIAKRO,
+// nbre_enf: 1, prise_service: null, type_agent: null,
+// grade: null, emloi: null, echelle: null,
+// date_emploi: 30/01/2020, fonction: AGENT DE CONCEPTION,
+// lib_dg: CABINET DU MINISTRE DE L'ECONOMIE ET DES FINANCES,
+// lib_dir: DIRECTION DES RESSOURCES HUMAINES, lib_sr: null,
+// lib_sce: SERVICE ETUDES ET DEVELOPPEMENT INFORMATIQUE,
+// mut_date_debut: 02/06/2020, code_sp: 634, sous_prefecture: PLATEAU,
+// departement: ABIDJAN, region: null, district: null, lieu_pays: null,
+// position: null, date_position: null, date_retraite: 03/03/2048,
+// date_1ere_ps: 04/02/2013, date_prise_serv_structure: 05/04/2019,
+// nat_libelle: IVOIRIENNE, hfonc_reference: N°19101000143057/MEF/DRH DU 12/04/2019, created: 2021-02-09 14:3
 Future<void> demandeActeSetup(DemandeActe _demandeacte) async {
   firebaseCloudMessaging_Listeners();
   var uuid = Uuid();
@@ -68,6 +90,41 @@ void firebaseCloudMessaging_Listeners() {
   FirebaseMessaging().getToken().then((token) {
     print("token of the device is : $token");
   });
+}
+
+Future<UserDetails> getUserInfo() async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  Map<String, dynamic> userMap;
+  final UserDetails userStr = json.decode(prefs.getString('userdata'));
+  return userStr;
+  // if (userStr != null) {
+  //   userMap = jsonDecode(userStr) as Map<String, dynamic>;
+  // }
+  //
+  // if (userMap != null) {
+  //   final UserDetails user = UserDetails.fromJson(userMap);
+  //   print(user);
+  //   return user;
+  // }
+  // return null;
+}
+
+Future<void> saveUserInfo(dynamic json) async {
+  final UserDetails user = UserDetails.fromJson(json);
+
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  // bool result = await prefs.setString('userdata', jsonEncode(user));
+  prefs.setInt('id', json['id']);
+  prefs.setString('ID_inscription', json['ID_inscription']);
+  prefs.setString('matricule', json['matricule']);
+  prefs.setString('nom', json['nom']);
+  prefs.setString('email', json['email']);
+  prefs.setString('cellulaire', json['cellulaire']);
+  prefs.setString('date_1ere_ps', json['date_1ere_ps']);
+  prefs.setString('lib_sce', json['lib_sce']);
+  bool result = await prefs.setString('userdata', user.toString());
+  // print(result);
 }
 
 Future<void> newsSetup(Actualites actualites) async {
@@ -147,7 +204,7 @@ Widget statusCode(int status, int numeroDemande) {
         ),
       );
       break;
-    case 2:
+    case 4:
       tempResult = "Votre demande a ete rejette";
       return Card(
         child: ListTile(
@@ -162,7 +219,7 @@ Widget statusCode(int status, int numeroDemande) {
         ),
       );
       break;
-    case 3:
+    case 2:
       tempResult = "Votre demande est disponible et peut etre retiré";
       return Card(
         child: ListTile(
@@ -177,7 +234,7 @@ Widget statusCode(int status, int numeroDemande) {
         ),
       );
       break;
-    case 4:
+    case 3:
       tempResult = "Votre demande a ete retire";
       return Card(
         child: ListTile(
@@ -199,4 +256,59 @@ Widget statusCode(int status, int numeroDemande) {
 
 void sendSms(TwilioFlutter twilioFlutter, String number, String message) async {
   twilioFlutter.sendSMS(toNumber: number, messageBody: message);
+}
+
+createNewDemandeActe(List<String> arguments) async {
+  UserDetails userdata = await getUserInfo();
+  print(userdata);
+  var url =
+      'http://192.168.1.4:8000/demandeActe/${arguments[0]}/${arguments[1]}/${arguments[2]}';
+
+  // Await the http get response, then decode the json-formatted response.
+  var response = await http.get(url);
+  if (response.statusCode == 200) {
+    var jsonResponse = convert.jsonDecode(response.body);
+    // var itemCount = jsonResponse['totalItems'];
+    Map userMap = jsonDecode(response.body);
+    print('reponse:body = ${response.body}');
+    saveUserInfo(jsonResponse);
+    return true;
+  } else {
+    print('Request failed with status: ${response.statusCode}.');
+    return false;
+  }
+}
+
+Future<bool> getLoginAgent(List<String> arguments) async {
+  // This example uses the Google Books API to search for books about http.
+  // https://developers.google.com/books/docs/overview
+  // var url = 'https://www.googleapis.com/books/v1/volumes?q={http}';
+  var urlInscriptions =
+      'http://192.168.1.2:8000/loginAgent/matricule=${arguments[0]}/password=${arguments[1]}';
+  var url = 'http://192.168.1.2:8000/agent';
+  SharedPreferences sharedPrefrences = await SharedPreferences.getInstance();
+  // Await the http get response, then decode the json-formatted response.
+  var firstResponse = await http.get(urlInscriptions);
+  if (firstResponse.statusCode == 200) {
+    print(firstResponse.body);
+    var jsonInscriptions = convert.jsonDecode(firstResponse.body);
+    if (jsonInscriptions['id'] != false) {
+      var response = await http.get(url);
+      if (response.statusCode == 200) {
+        var jsonResponse = convert.jsonDecode(response.body);
+        // var itemCount = jsonResponse['totalItems'];
+        Map userMap = jsonDecode(response.body);
+        var userdata = UserDetails.fromJson(userMap);
+        await saveUserInfo(jsonResponse);
+        print('in net/Firebase/getLoginAgent: $userdata');
+        return true;
+      } else {
+        print('Request failed with status: ${response.statusCode}.');
+        return false;
+      }
+    } else {
+      return false;
+    }
+    return false;
+  }
 }

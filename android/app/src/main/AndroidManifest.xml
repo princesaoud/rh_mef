@@ -11,7 +11,7 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <application
-        android:name="io.flutter.app.FlutterApplication"
+        android:name="com.example.youssouf.rhMef.Application"
         android:label="DRH MEF"
         android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher">
