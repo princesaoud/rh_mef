@@ -22,6 +22,12 @@ class _StatutsDemandeState extends State<StatutsDemande> {
     Colors.grey,
     Colors.grey
   ];
+  List<MaterialColor> textColor = [
+    Colors.grey,
+    Colors.grey,
+    Colors.grey,
+    Colors.grey
+  ];
   DocumentSnapshot documentSnapshot;
 
   @override
@@ -70,7 +76,7 @@ class _StatutsDemandeState extends State<StatutsDemande> {
       documentSnapshot = queryResult.docs.first;
     });
     int statutsCode = documentSnapshot.data()['statuts'];
-    // print('$statutsCode');
+    print('statutsCode: $statutsCode');
     switch (statutsCode) {
       // case 0:
       //   // print('statuts value is 0');
@@ -81,24 +87,27 @@ class _StatutsDemandeState extends State<StatutsDemande> {
       case 1:
         // print('statuts value is 1 ');
         setState(() {
-          for (var i = 0; i < statutsCode; i++) {
+          for (var i = 0; i <= statutsCode; i++) {
             statutsColor[i] = Colors.green;
+            textColor[i] = Colors.black;
           }
         });
         break;
       case 2:
         // print('Statuts value is 2');
         setState(() {
-          for (var i = 0; i < statutsCode; i++) {
+          for (var i = 0; i <= statutsCode; i++) {
             statutsColor[i] = Colors.green;
+            textColor[i] = Colors.green;
           }
         });
         break;
       case 3:
         // print('Statuts value is 3');
         setState(() {
-          for (var i = 0; i < statutsCode; i++) {
+          for (var i = 0; i <= statutsCode; i++) {
             statutsColor[i] = Colors.green;
+            textColor[i] = Colors.green;
           }
         });
         break;
@@ -107,6 +116,7 @@ class _StatutsDemandeState extends State<StatutsDemande> {
         setState(() {
           for (var i = 0; i < statutsCode; i++) {
             statutsColor[i] = Colors.green;
+            textColor[i] = Colors.green;
           }
         });
         break;
@@ -163,15 +173,18 @@ class _StatutsDemandeState extends State<StatutsDemande> {
                             timelineRow(
                                 "${widget.listSteps[0].title}",
                                 "${widget.listSteps[0].description}",
-                                statutsColor[0]),
+                                statutsColor[0],
+                                textColor[0]),
                             timelineRow(
                                 "${widget.listSteps[1].title}",
                                 '${widget.listSteps[1].description}',
-                                statutsColor[1]),
+                                statutsColor[1],
+                                textColor[1]),
                             timelineLastRow(
                                 "${widget.listSteps.last.title}",
                                 "${widget.listSteps.last.description}",
-                                statutsColor[2]),
+                                statutsColor[2],
+                                textColor[2]),
                           ],
                         ),
                         elevation: 2,
@@ -235,19 +248,23 @@ class _StatutsDemandeState extends State<StatutsDemande> {
                             timelineRow(
                                 "${widget.listSteps[0].title}",
                                 "${widget.listSteps[0].description}",
-                                statutsColor[0]),
+                                statutsColor[0],
+                                textColor[0]),
                             dotlineTimeline(
                                 "${widget.listSteps[1].title}",
                                 '${widget.listSteps[1].description}',
-                                statutsColor[1]),
+                                statutsColor[1],
+                                textColor[1]),
                             timelineRow(
                                 "${widget.listSteps[2].title}",
                                 "${widget.listSteps[2].description}",
-                                statutsColor[2]),
+                                statutsColor[2],
+                                textColor[2]),
                             timelineLastRow(
                                 "${widget.listSteps.last.title}",
                                 "${widget.listSteps.last.description}",
-                                statutsColor.last),
+                                statutsColor.last,
+                                textColor[3]),
                           ],
                         ),
                         elevation: 2,
@@ -263,7 +280,8 @@ class _StatutsDemandeState extends State<StatutsDemande> {
     );
   }
 
-  Widget timelineRow(String title, String subTile, MaterialColor colors) {
+  Widget timelineRow(String title, String subTile, MaterialColor colors,
+      MaterialColor textColors) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: <Widget>[
@@ -305,7 +323,10 @@ class _StatutsDemandeState extends State<StatutsDemande> {
               ListTile(
                 title: Text(
                   title,
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: colors,
+                  ),
                 ),
                 subtitle: Text(subTile),
               ),
@@ -316,7 +337,8 @@ class _StatutsDemandeState extends State<StatutsDemande> {
     );
   }
 
-  Widget dotlineTimeline(String title, String subTile, MaterialColor colors) {
+  Widget dotlineTimeline(String title, String subTile, MaterialColor colors,
+      MaterialColor textColors) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: <Widget>[
@@ -448,7 +470,10 @@ class _StatutsDemandeState extends State<StatutsDemande> {
               ListTile(
                 title: Text(
                   title,
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: textColors,
+                  ),
                 ),
                 subtitle: Text(subTile),
               ),
@@ -459,7 +484,8 @@ class _StatutsDemandeState extends State<StatutsDemande> {
     );
   }
 
-  Widget timelineLastRow(String title, String subTile, MaterialColor colors) {
+  Widget timelineLastRow(String title, String subTile, MaterialColor colors,
+      MaterialColor textColors) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: <Widget>[
@@ -510,7 +536,10 @@ class _StatutsDemandeState extends State<StatutsDemande> {
               ListTile(
                 title: Text(
                   title,
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: textColors,
+                  ),
                 ),
                 subtitle: Text(subTile),
               )

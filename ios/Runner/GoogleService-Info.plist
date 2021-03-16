@@ -3,23 +3,21 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>307641230013-tdia4fufmbctu4pq0nios1v5pta45mmn.apps.googleusercontent.com</string>
+	<string>1008896250092-vdivq5qbkmn9o2vl8vl3hk3g1bf6fqt2.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.307641230013-tdia4fufmbctu4pq0nios1v5pta45mmn</string>
-	<key>ANDROID_CLIENT_ID</key>
-	<string>307641230013-7ilcsuptd84ml2u8q4cb0gl8l2c5pnna.apps.googleusercontent.com</string>
+	<string>com.googleusercontent.apps.1008896250092-vdivq5qbkmn9o2vl8vl3hk3g1bf6fqt2</string>
 	<key>API_KEY</key>
-	<string>AIzaSyDUi6Y0bokpQg9miUCZ8kCSczZjmuMYqAc</string>
+	<string>AIzaSyB6UvCbDSg-A_yi8VkSIa8d-lxrOuCFulY</string>
 	<key>GCM_SENDER_ID</key>
-	<string>307641230013</string>
+	<string>1008896250092</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.example.youssouf.rhMef</string>
 	<key>PROJECT_ID</key>
-	<string>newsapp-60142</string>
+	<string>rhmef-f4f7d</string>
 	<key>STORAGE_BUCKET</key>
-	<string>newsapp-60142.appspot.com</string>
+	<string>rhmef-f4f7d.appspot.com</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -31,8 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:307641230013:ios:44ad625ce038be9511cdd4</string>
-	<key>DATABASE_URL</key>
-	<string>https://newsapp-60142.firebaseio.com</string>
+	<string>1:1008896250092:ios:fc920b10139b37715c15c9</string>
 </dict>
 </plist>

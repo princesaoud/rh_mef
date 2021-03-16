@@ -44,7 +44,7 @@ class UserDetails {
   // String created_at;
   // String updated_at;
 
-  UserDetails(
+  UserDetails({
     this.id,
     this.matricule,
     this.nom,
@@ -87,9 +87,10 @@ class UserDetails {
     this.hfonc_reference,
     this.created,
     this.modified,
-    // this.created_at,
-    // this.updated_at
-  );
+  }
+      // this.created_at,
+      // this.updated_at
+      );
 
   @override
   String toString() {

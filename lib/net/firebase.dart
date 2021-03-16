@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:commons/commons.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -62,6 +63,10 @@ Future<void> demandeActeSetup(DemandeActe _demandeacte) async {
   // FirebaseAuth auth = FirebaseAuth.instance;
   // String uid = auth.currentUser.uid.toString();
   String docId = uuid.v4();
+  SharedPreferences shar = await SharedPreferences.getInstance();
+  String matricule = shar.getString('matricule');
+  FirebaseAuth auth = FirebaseAuth.instance;
+
   FirebaseMessaging().getToken().then((token) async {
     acteDemand.doc(docId).set({
       'key': docId,
@@ -77,9 +82,39 @@ Future<void> demandeActeSetup(DemandeActe _demandeacte) async {
       'motif': _demandeacte.motif,
       'statuts': _demandeacte.statuts,
       'numeroDemande': numeroDemande,
+      'userId': auth.currentUser.uid,
       'updated': DateTime.now(),
       'isNotification': true,
     });
+    // bool pushNotification = await callOnFcmApiSendPushNotifications(token);
+  });
+
+  return;
+}
+
+Future<void> userProfileSetup(UserDetails userDetails, String userId) async {
+  CollectionReference profileReference =
+      FirebaseFirestore.instance.collection('Profile');
+  // FirebaseAuth auth = FirebaseAuth.instance;
+  // String uid = auth.currentUser.uid.toString();
+  FirebaseMessaging().getToken().then((token) async {
+    profileReference.doc(userId).set({
+      'matricule': userDetails.matricule,
+      'nom': userDetails.nom,
+      'tel': userDetails.tel_domicile,
+      'email': userDetails.email,
+      'priseDeService': userDetails.prise_service,
+      'fonction': userDetails.fonction,
+      'userId': userId,
+      'token': token
+    });
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    sharedPreferences.setString('matricule', userDetails.matricule);
+    sharedPreferences.setString('nom', userDetails.nom);
+    sharedPreferences.setString('tel', userDetails.tel_domicile);
+    sharedPreferences.setString('email', userDetails.email);
+    sharedPreferences.setString('priseDeService', userDetails.prise_service);
+    sharedPreferences.setString('fonction', userDetails.fonction);
     // bool pushNotification = await callOnFcmApiSendPushNotifications(token);
   });
 
@@ -187,7 +222,7 @@ Widget statusCode(int status, int numeroDemande) {
           leading: Icon(Icons.pending_actions_rounded),
           title: Text('Numero demande: $numeroDemande'),
           subtitle: Text(
-            'Progression: $tempResult',
+            'Progression: $tempResult \n ',
           ),
         ),
       );
@@ -262,7 +297,7 @@ createNewDemandeActe(List<String> arguments) async {
   UserDetails userdata = await getUserInfo();
   print(userdata);
   var url =
-      'http://192.168.1.4:8000/demandeActe/${arguments[0]}/${arguments[1]}/${arguments[2]}';
+      'http://192.168.1.6:8000/demandeActe/${arguments[0]}/${arguments[1]}/${arguments[2]}';
 
   // Await the http get response, then decode the json-formatted response.
   var response = await http.get(url);
@@ -279,14 +314,34 @@ createNewDemandeActe(List<String> arguments) async {
   }
 }
 
+getLoginAgentFirebaseWay({String email, String password}) async {
+  try {
+    UserCredential userCredential = await FirebaseAuth.instance
+        .signInWithEmailAndPassword(email: "$email", password: "$password");
+  } on FirebaseAuthException catch (e) {
+    if (e.code == 'user-not-found') {
+      print('No user found for that email.');
+    } else if (e.code == 'wrong-password') {
+      print('Wrong password provided for that user.');
+    }
+  }
+}
+
 Future<bool> getLoginAgent(List<String> arguments) async {
   // This example uses the Google Books API to search for books about http.
   // https://developers.google.com/books/docs/overview
   // var url = 'https://www.googleapis.com/books/v1/volumes?q={http}';
   var urlInscriptions =
-      'http://192.168.1.2:8000/loginAgent/matricule=${arguments[0]}/password=${arguments[1]}';
-  var url = 'http://192.168.1.2:8000/agent';
-  SharedPreferences sharedPrefrences = await SharedPreferences.getInstance();
+      'http://192.168.1.6:8000/loginAgent/matricule=${arguments[0]}/password=${arguments[1]}';
+  var url = 'http://192.168.1.6:8000/agent';
+  var connectionUser = FirebaseFirestore.instance
+      .collection('loginUser')
+      .where('username', isEqualTo: arguments[0])
+      .where('password', isEqualTo: arguments[1])
+      .snapshots();
+  if (connectionUser != null) {
+    return true;
+  }
   // Await the http get response, then decode the json-formatted response.
   var firstResponse = await http.get(urlInscriptions);
   if (firstResponse.statusCode == 200) {
@@ -300,7 +355,7 @@ Future<bool> getLoginAgent(List<String> arguments) async {
         Map userMap = jsonDecode(response.body);
         var userdata = UserDetails.fromJson(userMap);
         await saveUserInfo(jsonResponse);
-        print('in net/Firebase/getLoginAgent: $userdata');
+        // print('in net/Firebase/getLoginAgent: $userdata');
         return true;
       } else {
         print('Request failed with status: ${response.statusCode}.');

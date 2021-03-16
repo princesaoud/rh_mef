@@ -1,7 +1,6 @@
-import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:commons/commons.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
@@ -12,6 +11,8 @@ import 'package:rh_mef/net/firebase.dart';
 import 'package:rh_mef/view/complaint.dart';
 import 'package:rh_mef/view/demande_dactes.dart';
 import 'package:rh_mef/view/detailsInformation.dart';
+import 'package:rh_mef/view/profiledetails.dart';
+import 'package:rh_mef/view/registrationScreen.dart';
 import 'package:rh_mef/view/retraiteProcedure.dart';
 import 'package:twilio_flutter/twilio_flutter.dart';
 
@@ -74,6 +75,7 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -88,11 +90,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-Future<dynamic> _onBackgroundMessage(Map<String, dynamic> message) async {
-  debugPrint('On background message $message');
-  return Future<void>.value();
-}
-
 class LoginContent extends StatefulWidget {
   @override
   _LoginContentState createState() => _LoginContentState();
@@ -105,11 +102,16 @@ class _LoginContentState extends State<LoginContent> {
   final GlobalKey<ScaffoldState> _drawerKey = GlobalKey();
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
   TwilioFlutter twilioFlutter;
+  FirebaseAuth auth = FirebaseAuth.instance;
 
   getStatutsUser() async {
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    final String userdata = sharedPreferences.getString('userdata');
-    return userdata;
+    // SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    // final String userdata = sharedPreferences.getString('userdata');
+    if (auth.currentUser != null) {
+      print(auth.currentUser.uid);
+      return auth.currentUser.uid;
+    }
+    return null;
   }
 
   @override
@@ -131,10 +133,24 @@ class _LoginContentState extends State<LoginContent> {
     flutterLocalNotificationsPlugin.initialize(initilizationsSettings,
         onSelectNotification: notificationSelected);
 
-    if (Platform.isAndroid) {
-      print('android platform');
-      firebaseCloudMessagingListeners();
-    }
+    // if (Platform.isAndroid) {
+    //   print('android platform');
+    //   firebaseCloudMessagingListeners();
+    // }
+    _firebaseMessaging.configure(
+      onMessage: (Map<String, dynamic> message) async {
+        print("onMessage: $message");
+        await _showNotification('${message['notification']['title']}',
+            '${message['notification']['body']}');
+      },
+      onBackgroundMessage: myBackgroundMessageHandler,
+      onLaunch: (Map<String, dynamic> message) async {
+        print("onLaunch: $message");
+      },
+      onResume: (Map<String, dynamic> message) async {
+        print("onResume: $message");
+      },
+    );
   }
 
   Future onDidReceiveLocalNotification(
@@ -190,13 +206,11 @@ class _LoginContentState extends State<LoginContent> {
 
   void firebaseCloudMessagingListeners() {
     _firebaseMessaging.configure(
-      onBackgroundMessage: _onBackgroundMessage,
+      onBackgroundMessage: myBackgroundMessageHandler,
       onMessage: (Map<String, dynamic> message) async {
-        String title = message['notification']['title'];
-        print("onMessage: ${title}");
-
-        await _showNotification(message['notification']['title'],
-            message['notification']['description']);
+        print("onMessage2: ${message}");
+        await _showNotification(
+            message['notification']['title'], message['notification']['body']);
       },
       onLaunch: (Map<String, dynamic> message) async {
         print("onLaunch: $message");
@@ -267,7 +281,7 @@ class _LoginContentState extends State<LoginContent> {
                   controller: nameController,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
-                    labelText: 'Matricule',
+                    labelText: 'Email',
                   ),
                 ),
               ),
@@ -289,6 +303,17 @@ class _LoginContentState extends State<LoginContent> {
                 textColor: Colors.blue,
                 child: Text('Mot de passe oublié'),
               ),
+              FlatButton(
+                onPressed: () {
+                  //create new user
+                  Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => RegistrationScreen()));
+                },
+                textColor: Colors.black,
+                child: Text('S\'inscrire'),
+              ),
               Container(
                   height: 50,
                   padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
@@ -297,10 +322,11 @@ class _LoginContentState extends State<LoginContent> {
                         primary: Colors.white, backgroundColor: Colors.orange),
                     child: Text('Se Connecter'),
                     onPressed: () async {
-                      String matricule = nameController.text;
+                      String email = nameController.text;
                       String password = passwordController.text;
-                      bool result = await getLoginAgent([matricule, password]);
-
+                      // bool result = await getLoginAgent([matricule, password]);
+                      bool result = await getLoginAgentFirebaseWay(
+                          email: email, password: password);
                       if (result == false) {
                         // print(result);
                         errorDialog(context,
@@ -309,27 +335,8 @@ class _LoginContentState extends State<LoginContent> {
                         Navigator.pushReplacement(context,
                             MaterialPageRoute(builder: (context) => MyApp()));
                       }
-                      // print(nameController.text);
-                      // print(passwordController.text);
                     },
                   )),
-              // Container(
-              //     child: Row(
-              //   children: <Widget>[
-              //     Text('Does not have account?'),
-              //     FlatButton(
-              //       textColor: Colors.blue,
-              //       child: Text(
-              //         'S\'inscrire',
-              //         style: TextStyle(fontSize: 20),
-              //       ),
-              //       onPressed: () {
-              //         //signup screen
-              //       },
-              //     )
-              //   ],
-              //   mainAxisAlignment: MainAxisAlignment.center,
-              // ))
             ],
           )),
     );
@@ -372,41 +379,70 @@ class _LoginContentState extends State<LoginContent> {
                             ),
                           ),
                           ListTile(
-                            title: Text(Constants.accueil),
-                            leading: Icon(Icons.home),
-                            onTap: () {
+                            title: Text("Profile"),
+                            leading: Icon(Icons.person),
+                            onTap: () async {
                               // Update the state of the app
                               // ...
                               // Then close the drawer
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //       builder: (context) => DetailsInformations()),
-                              // );
+                              FirebaseFirestore.instance
+                                  .collection('Profile')
+                                  .doc(auth.currentUser.uid)
+                                  .snapshots()
+                                  .forEach((element) {
+                                print(element.data());
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          ProfileDetails(values: element)),
+                                );
+                              });
 
-                              Navigator.pop(context);
-                            },
-                          ),
-                          Divider(
-                            thickness: 2,
-                          ),
-                          ListTile(
-                            title: Text(Constants.suggestion),
-                            leading: Icon(Icons.message),
-                            onTap: () {
-                              // Update the state of the app
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => Complaint()),
-                              );
-                              // Then close the drawer
                               // Navigator.pop(context);
                             },
                           ),
                           Divider(
                             thickness: 2,
                           ),
+                          //TODO: home for news
+                          // ListTile(
+                          //   title: Text(Constants.accueil),
+                          //   leading: Icon(Icons.home),
+                          //   onTap: () {
+                          //     // Update the state of the app
+                          //     // ...
+                          //     // Then close the drawer
+                          //     // Navigator.push(
+                          //     //   context,
+                          //     //   MaterialPageRoute(
+                          //     //       builder: (context) => DetailsInformations()),
+                          //     // );
+                          //
+                          //     Navigator.pop(context);
+                          //   },
+                          // ),
+                          // Divider(
+                          //   thickness: 2,
+                          // ),
+                          //TODO: Setting up for suggestion field
+                          // ListTile(
+                          //   title: Text(Constants.suggestion),
+                          //   leading: Icon(Icons.message),
+                          //   onTap: () {
+                          //     // Update the state of the app
+                          //     Navigator.push(
+                          //       context,
+                          //       MaterialPageRoute(
+                          //           builder: (context) => Complaint()),
+                          //     );
+                          //     // Then close the drawer
+                          //     // Navigator.pop(context);
+                          //   },
+                          // ),
+                          // Divider(
+                          //   thickness: 2,
+                          // ),
                           ListTile(
                             title: Text(Constants.dmd_act),
                             leading: Icon(Icons.insert_drive_file),
@@ -422,24 +458,26 @@ class _LoginContentState extends State<LoginContent> {
                               // Navigator.pop(context);
                             },
                           ),
-                          Divider(
-                            thickness: 2,
-                          ),
-                          ListTile(
-                            title: Text(Constants.retraite),
-                            leading: Icon(Icons.assistant),
-                            onTap: () {
-                              // Update the state of the app
-                              // ...
-                              // Then close the drawer
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => RetraiteProccedure()),
-                              );
-                              // Navigator.pop(context);
-                            },
-                          ),
+                          // Divider(
+                          //   thickness: 2,
+                          // ),
+
+                          //TODO: retreat field setting up
+                          // ListTile(
+                          //   title: Text(Constants.retraite),
+                          //   leading: Icon(Icons.assistant),
+                          //   onTap: () {
+                          //     // Update the state of the app
+                          //     // ...
+                          //     // Then close the drawer
+                          //     Navigator.pushReplacement(
+                          //       context,
+                          //       MaterialPageRoute(
+                          //           builder: (context) => RetraiteProccedure()),
+                          //     );
+                          //     // Navigator.pop(context);
+                          //   },
+                          // ),
                           Divider(
                             thickness: 2,
                           ),
@@ -457,11 +495,11 @@ class _LoginContentState extends State<LoginContent> {
                               // );
                               // sendSms();
                               // _showNotification('abc', 'efg');
-                              createNewDemandeActe([
-                                'Motif is the motivation',
-                                'Nature Acte',
-                                'the piece jointe link'
-                              ]);
+                              // createNewDemandeActe([
+                              //   'Motif is the motivation',
+                              //   'Nature Acte',
+                              //   'the piece jointe link'
+                              // ]);
                             },
                           ),
                           Divider(
@@ -486,20 +524,29 @@ class _LoginContentState extends State<LoginContent> {
                           MaterialPageRoute(builder: (context) => MyApp()),
                         );
                       },
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.highlight_off,
-                            color: Colors.white,
-                          ),
-                          Expanded(
-                            child: Text(
-                              "Deconnecter",
-                              style: TextStyle(color: Colors.white),
-                              textAlign: TextAlign.center,
+                      child: TextButton(
+                        onPressed: () {
+                          auth.signOut();
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => MyApp()),
+                          );
+                        },
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.highlight_off,
+                              color: Colors.white,
                             ),
-                          )
-                        ],
+                            Expanded(
+                              child: Text(
+                                "Deconnecter",
+                                style: TextStyle(color: Colors.white),
+                                textAlign: TextAlign.center,
+                              ),
+                            )
+                          ],
+                        ),
                       ),
                     ))
                   ],
@@ -547,10 +594,23 @@ class _MyHomePageState extends State<MyHomePage> {
     flutterLocalNotificationsPlugin.initialize(initilizationsSettings,
         onSelectNotification: notificationSelected);
 
-    if (Platform.isAndroid) {
-      print('android platform');
-      firebaseCloudMessagingListeners();
-    }
+    // if (Platform.isAndroid) {
+    //   print('android platform');
+    //   firebaseCloudMessagingListeners();
+    // }
+
+    // _firebaseMessaging.configure(
+    //   onMessage: (Map<String, dynamic> message) async {
+    //     print("onMessage: $message");
+    //   },
+    //   onBackgroundMessage: myBackgroundMessageHandler,
+    //   onLaunch: (Map<String, dynamic> message) async {
+    //     print("onLaunch: $message");
+    //   },
+    //   onResume: (Map<String, dynamic> message) async {
+    //     print("onResume: $message");
+    //   },
+    // );
   }
 
   Future onDidReceiveLocalNotification(
@@ -581,12 +641,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future notificationSelected(String payload) async {
-    // showDialog(
-    //   context: context,
-    //   builder: (context) => AlertDialog(
-    //     content: Text("Notification Clicked $payload"),
-    //   ),
-    // );
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text("Notification Clicked $payload"),
+      ),
+    );
   }
 
   Future _showNotification(String title, String description) async {
@@ -606,14 +666,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void firebaseCloudMessagingListeners() {
     _firebaseMessaging.configure(
+      onBackgroundMessage: myBackgroundMessageHandler,
       onMessage: (Map<String, dynamic> message) async {
         String title = message['notification']['title'];
-        print("onMessage: ${title}");
-
+        print("onMessage: $message");
         await _showNotification(message['notification']['title'],
             message['notification']['description']);
       },
-      onBackgroundMessage: myBackgroundMessageHandler,
       onLaunch: (Map<String, dynamic> message) async {
         print("onLaunch: $message");
         await _showNotification('onResume', 'efg');

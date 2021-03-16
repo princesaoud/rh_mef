@@ -71,10 +71,21 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   String pickedMotif = "Click Pour ajouter une motif";
 
   String mDeviceToken;
+  String matricule;
 
   //TODO: DECLARE VARIABLE FOR FILE HANDLING SYSTEM
 
+  Future<String> getMatricule() async {
+    String getValue = "";
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    getValue = sharedPreferences.getString("matricule");
+    // print('getValue = $getValue');
+    return getValue;
+  }
+
   Widget build(BuildContext context) {
+    //Call value of matricule
+    // getMatricule();
     return Container(
         child: Column(
       children: [
@@ -104,100 +115,105 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           ),
         ),
         Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection("ActeDemand")
-                // .where("deviceId", isEqualTo: "$")
-                .orderBy('updated', descending: true)
-                .snapshots(),
-            builder:
-                (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-              if (snapshot.hasData) {
-                return ListView.builder(
-                    itemCount: snapshot.data.docs.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      DocumentSnapshot documentSnapshot =
-                          snapshot.data.docs[index];
-                      String deviceId = documentSnapshot.data()['deviceId'];
-                      if (deviceId.isNotEmpty && deviceId == mDeviceToken) {
-                        // print('succces');
-                        int numeroDemande =
-                            documentSnapshot.data()['numeroDemande'];
-                        String demandeName =
-                            documentSnapshot.data()['natureActe'];
-                        //TODO: work on the where clause
-                        return TextButton(
-                          onPressed: () async {
-                            List<ListSteps> listsSteps = [];
+          child: FutureBuilder(
+            future: getMatricule(),
+            builder: (BuildContext context,
+                AsyncSnapshot<String> snapshotMatricule) {
+              print('matricule est: ${snapshotMatricule.data}');
+              return StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection("ActeDemand")
+                    .where("matricule", isEqualTo: snapshotMatricule.data)
+                    .orderBy('updated', descending: true)
+                    .snapshots(),
+                builder: (BuildContext context,
+                    AsyncSnapshot<QuerySnapshot> snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+                  if (snapshot.hasData) {
+                    return ListView.builder(
+                        itemCount: snapshot.data.docs.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          int numeroDemande =
+                              snapshot.data.docs[index].data()['numeroDemande'];
+                          String demandeName =
+                              snapshot.data.docs[index].data()['natureActe'];
+                          //TODO: work on the where clause
+                          return TextButton(
+                            onPressed: () async {
+                              List<ListSteps> listsSteps = [];
 
-                            SharedPreferences sharedprefs =
-                                await SharedPreferences.getInstance();
-                            sharedprefs.setInt('numeroDemande',
-                                documentSnapshot.data()['numeroDemande']);
-                            listsSteps.add(
-                              ListSteps(
-                                  title: 'Votre document a ete valide',
-                                  description:
-                                      'Vos document soumis, sont conforme et vos demande d\'acte est encours de traitement'),
-                            );
-                            listsSteps.add(
-                              ListSteps(
-                                  title:
-                                      'Votre document est complète, et peut etre retirée',
-                                  description:
-                                      'Le traitement de votre demande est effectuee avec succes, et votre document peut etre retirer avec succes'),
-                            );
+                              SharedPreferences sharedprefs =
+                                  await SharedPreferences.getInstance();
+                              sharedprefs.setInt(
+                                  'numeroDemande',
+                                  snapshot.data.docs[index]
+                                      .data()['numeroDemande']);
+                              listsSteps.add(
+                                ListSteps(
+                                    title: 'Votre document a ete valide',
+                                    description:
+                                        'Vos document soumis, sont conforme et vos demande d\'acte est encours de traitement'),
+                              );
+                              listsSteps.add(
+                                ListSteps(
+                                    title:
+                                        'Votre document est complète, et peut etre retirée',
+                                    description:
+                                        'Le traitement de votre demande est effectuee avec succes, et votre document peut etre retirer avec succes'),
+                              );
 
-                            listsSteps.add(
-                              ListSteps(
-                                  title: 'Vous avez retirée votre demande',
-                                  description:
-                                      'Votre document viens d\'etre retire avec succes '),
-                            );
-                            if (demandeName
-                                .contains("Attestation de présence solde")) {
-                              // print('attestion de presence de solde is true');
-                              listsSteps.clear();
-                              listsSteps.add(ListSteps(
-                                  title: "Demande en ligne reçu",
-                                  description:
-                                      "La DRH a reçu vos document avec succes, votre dossier en cours de traitement"));
-                              listsSteps.add(ListSteps(
-                                  title:
-                                      "Votre demande necessite une signature de votre Direction",
-                                  description:
-                                      "La DRH a traité vos documents, veuillez passer les recupperer pour une signature supplementaire avant la proccedure finale"));
-                              listsSteps.add(ListSteps(
-                                  title: "La DRH a réçu vos documents signé",
-                                  description:
-                                      "Vous deposez les documents physique au sein de la DRH/MEF pour initialiser la proccedure de votre de demande"));
-                              listsSteps.add(ListSteps(
-                                  title: "Votre demande est fin prête",
-                                  description:
-                                      "Vous pouvez passer recupperer votre document"));
-                            }
+                              listsSteps.add(
+                                ListSteps(
+                                    title: 'Vous avez retirée votre demande',
+                                    description:
+                                        'Votre document viens d\'etre retire avec succes '),
+                              );
+                              if (demandeName
+                                  .contains("Attestation de présence solde")) {
+                                // print('attestion de presence de solde is true');
+                                listsSteps.clear();
+                                listsSteps.add(ListSteps(
+                                    title: "Demande en ligne reçu",
+                                    description:
+                                        "La DRH a reçu vos document avec succes, votre dossier en cours de traitement"));
+                                listsSteps.add(ListSteps(
+                                    title:
+                                        "Votre demande necessite une signature de votre Direction",
+                                    description:
+                                        "La DRH a traité vos documents, veuillez passer les recupperer pour une signature supplementaire avant la proccedure finale"));
+                                listsSteps.add(ListSteps(
+                                    title: "La DRH a réçu vos documents signé",
+                                    description:
+                                        "Vous deposez les documents physique au sein de la DRH/MEF pour initialiser la proccedure de votre de demande"));
+                                listsSteps.add(ListSteps(
+                                    title: "Votre demande est fin prête",
+                                    description:
+                                        "Vous pouvez passer recupperer votre document"));
+                              }
 
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      StatutsDemande(listsSteps)),
-                            );
-                          },
-                          child: statusCode(documentSnapshot.data()['statuts'],
-                              numeroDemande),
-                        );
-                      }
-                      return Container();
-                    });
-              } else {
-                return Container();
-              }
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        StatutsDemande(listsSteps)),
+                              );
+                            },
+                            child: statusCode(
+                                snapshot.data.docs[index].data()['statuts'],
+                                numeroDemande),
+                          );
+                          // }
+                          return Container();
+                        });
+                  } else {
+                    return Container();
+                  }
+                },
+              );
             },
           ),
         ),
@@ -429,12 +445,12 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
                 print('demande d\'acte envoye');
                 String description =
                     "Une nouvelle demande d'acte est en attente de validation";
-                String userToken = FirebaseFirestore.instance
-                    .collection('adminKey')
-                    .doc('key')
-                    .toString();
+                // String userToken = FirebaseFirestore.instance
+                //     .collection('adminKey')
+                //     .doc('key')
+                //     .toString();
                 successDialog(context, 'Votre demande est envoyé avec succès');
-                callOnFcmApiSendPushNotifications(userToken, description);
+                // callOnFcmApiSendPushNotifications(userToken, description);
                 Navigator.pushReplacement(
                     context, MaterialPageRoute(builder: (context) => MyApp()));
                 // print(_demandeacte.toString());
