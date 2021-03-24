@@ -1,6 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:rh_mef/main.dart';
+import 'package:rh_mef/net/firebase.dart';
 import 'package:rh_mef/view/retraite/documentfoncpu.dart';
 
 class RetraiteProccedure extends StatefulWidget {
@@ -13,6 +16,8 @@ enum viewValue { home, fp, cgrae }
 class _RetraiteProccedureState extends State<RetraiteProccedure> {
   // static var view = '${viewValue.home}';
   static var view = viewValue.home;
+  FirebaseAuth auth = FirebaseAuth.instance;
+
   List<String> listDocumentsFP = [
     "L'Extrait de naissance de l'interesse(e) (Original)",
     "Photocopie de la CNI de l'interessé(e)",
@@ -48,163 +53,381 @@ class _RetraiteProccedureState extends State<RetraiteProccedure> {
           icon: Icon(Icons.arrow_back),
         ),
         title: Text(
-          'Proccedure à suivre',
+          'Etape de la mise en retraite',
           style: TextStyle(fontSize: 20),
         ),
       ),
-      body: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Card(
-                  child: Container(
-                    color: Colors.white30,
-                    child: Padding(
-                      padding: const EdgeInsets.all(15.0),
-                      child: ListTile(
-                        onTap: () {
-                          Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => DocumentSelected(
-                                        listDocuments: listDocumentsFP,
-                                        title: 'Fonction Publique',
-                                      )));
-                        },
-                        title: Text(
-                          'Fonction Publique',
-                          textAlign: TextAlign.left,
-                          style: TextStyle(fontSize: 20),
-                        ),
-                        subtitle: Text(
-                            'Cliquer pour obtenir la liste des dossiers a soumettre a la fonction publique '),
-                        trailing: Icon(Icons.arrow_forward_ios_outlined),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          // Row(
-          //   children: [
-          //     Expanded(
-          //       flex: 1,
-          //       child: Column(
-          //         // mainAxisAlignment: MainAxisAlignment.start,
-          //         mainAxisSize: MainAxisSize.min,
-          //         crossAxisAlignment: CrossAxisAlignment.center,
-          //         children: <Widget>[
-          //           Container(
-          //             width: 3,
-          //             height: 50,
-          //             decoration: new BoxDecoration(
-          //               color: Colors.black,
-          //               shape: BoxShape.rectangle,
-          //             ),
-          //             child: Text(""),
-          //           ),
-          //           Container(
-          //             width: 18,
-          //             height: 18,
-          //             decoration: new BoxDecoration(
-          //               color: Colors.black,
-          //               shape: BoxShape.circle,
-          //             ),
-          //             child: Text(""),
-          //           ),
-          //         ],
-          //       ),
-          //     ),
-          //   ],
-          // ),
-          Card(
-            child: Container(
-              color: Colors.white30,
-              child: Padding(
-                padding: const EdgeInsets.all(15.0),
-                child: ListTile(
-                  onTap: () {
-                    Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => DocumentSelected(
-                                  listDocuments: listDocumentsCgrae,
-                                  title: 'CGRAE',
-                                )));
-                  },
-                  title: Text(
-                    'CGRAE',
-                    textAlign: TextAlign.left,
-                    style: TextStyle(fontSize: 20),
-                  ),
-                  subtitle: Text(
-                      'Cliquer pour obtenir la liste des dossiers a soumettre a la CGRAE '),
-                  trailing: Icon(
-                    Icons.arrow_forward_ios_outlined,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Row(
-            children: [
-              Expanded(
-                flex: 1,
-                child: Column(
-                  // mainAxisAlignment: MainAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
+      body: Card(
+        elevation: 2,
+        margin: EdgeInsets.all(10),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 30),
+          child: StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection("Retreate")
+                  .doc('${auth.currentUser.uid}')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                //checking for colors
+                final int value = snapshot.data.data()['steps'];
+                List<MaterialColor> listColors = colorForRetreateList(value);
+                return ListView(
                   children: <Widget>[
-                    Container(
-                      width: 3,
-                      height: 50,
-                      decoration: new BoxDecoration(
-                        color: Colors.black,
-                        shape: BoxShape.rectangle,
+                    //TODO: ADD TITLE
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => DocumentSelected(
+                                      listDocuments: listDocumentsFP,
+                                    )));
+                      },
+                      child: Container(
+                        child: timelineRow(
+                            "Constitution des documents a la DRH/MEF",
+                            "Veuillez soumettre es documents, nécessaire pour la constitution de votre dossier\nCliquez pour voir la liste",
+                            listColors[0],
+                            listColors[0]),
                       ),
-                      child: Text(""),
                     ),
                     Container(
-                      width: 18,
-                      height: 18,
-                      decoration: new BoxDecoration(
-                        color: Colors.black,
-                        shape: BoxShape.circle,
+                      child: timelineRow(
+                          "Votre document transmis a la Fonction Publique",
+                          "Vos documents, sont en traitement au bureau de la fonction publique",
+                          listColors[1],
+                          listColors[1]),
+                    ),
+                    Container(
+                        child: dotlineTimeline(
+                      "Document de radiation établie",
+                      " ",
+                      listColors[2],
+                      listColors[2],
+                    )),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => DocumentSelected(
+                                      listDocuments: listDocumentsCgrae,
+                                    )));
+                      },
+                      child: Container(
+                        child: timelineRow(
+                            "Constitution des documents pour la CGRAE",
+                            "Veuillez soumettre les documents, nécessaire pour la constitution de votre de la CGRAE \nCliquez pour voir la liste",
+                            listColors[3],
+                            listColors[3]),
                       ),
-                      child: Text(""),
+                    ),
+                    Container(
+                      child: dotlineTimeline(
+                          "Document pour de la CGRAE constitué",
+                          "",
+                          listColors[4],
+                          listColors[4]),
+                    ),
+                    Container(
+                      child: timelineRow(
+                        "Votre document transmis a la CGRAE",
+                        "Vos documents, sont en traitement au bureau de la CGRAE",
+                        listColors[5],
+                        listColors[5],
+                      ),
+                    ),
+                    Container(
+                      child: timelineLastRow(
+                        "Proccedure terminée",
+                        "",
+                        listColors[6],
+                        listColors[6],
+                      ),
                     ),
                   ],
-                ),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(15.0),
-                    child: ListTile(
-                      title: Text(
-                        'Statuts',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 20),
-                      ),
-                      subtitle: Center(
-                        child: Text('Aucune proccedure entammée'),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+                );
+              }),
+        ),
       ),
     );
   }
 
-  Widget documentFP(String title, List<String> listDocuments) {}
+  Widget documentFP(String title, List<String> listDocuments) {
+    return Container();
+  }
+
+  Widget timelineRow(String title, String subTile, MaterialColor colors,
+      MaterialColor textColors) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: <Widget>[
+        Expanded(
+          flex: 1,
+          child: Column(
+            // mainAxisAlignment: MainAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              Container(
+                width: 18,
+                height: 18,
+                decoration: new BoxDecoration(
+                  color: colors,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(""),
+              ),
+              Container(
+                width: 3,
+                height: 70,
+                decoration: new BoxDecoration(
+                  color: colors,
+                  shape: BoxShape.rectangle,
+                ),
+                child: Text(""),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          flex: 7,
+          child: Column(
+            // mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              ListTile(
+                title: Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: colors,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                subtitle: Text(
+                  subTile,
+                  style: TextStyle(color: colors),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget dotlineTimeline(String title, String subTile, MaterialColor colors,
+      MaterialColor textColors) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: <Widget>[
+        Expanded(
+          flex: 1,
+          child: Column(
+            // mainAxisAlignment: MainAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              Container(
+                width: 18,
+                height: 18,
+                decoration: new BoxDecoration(
+                  color: colors,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(""),
+              ),
+              Container(
+                width: 7,
+                height: 7,
+                decoration: new BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(""),
+              ),
+              Container(
+                width: 7,
+                height: 7,
+                decoration: new BoxDecoration(
+                  color: colors,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(""),
+              ),
+              Container(
+                width: 7,
+                height: 7,
+                decoration: new BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(""),
+              ),
+              Container(
+                width: 7,
+                height: 7,
+                decoration: new BoxDecoration(
+                  color: colors,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(""),
+              ),
+              Container(
+                width: 7,
+                height: 7,
+                decoration: new BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(""),
+              ),
+              Container(
+                width: 7,
+                height: 7,
+                decoration: new BoxDecoration(
+                  color: colors,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(""),
+              ),
+              Container(
+                width: 7,
+                height: 7,
+                decoration: new BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(""),
+              ),
+              Container(
+                width: 7,
+                height: 7,
+                decoration: new BoxDecoration(
+                  color: colors,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(""),
+              ),
+              Container(
+                width: 7,
+                height: 7,
+                decoration: new BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(""),
+              ),
+              Container(
+                width: 7,
+                height: 7,
+                decoration: new BoxDecoration(
+                  color: colors,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(""),
+              ),
+              Container(
+                width: 5,
+                height: 5,
+                decoration: new BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(""),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          flex: 7,
+          child: Column(
+            // mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              ListTile(
+                title: Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: textColors,
+                  ),
+                ),
+                subtitle: Text(subTile),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget timelineLastRow(String title, String subTile, MaterialColor colors,
+      MaterialColor textColors) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: <Widget>[
+        Expanded(
+          flex: 1,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              Container(
+                width: 18,
+                height: 18,
+                decoration: new BoxDecoration(
+                  color: colors,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(""),
+              ),
+              Container(
+                width: 3,
+                height: 55,
+                decoration: new BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.rectangle,
+                ),
+                child: Text(""),
+              ),
+              // Container(
+              //   width: 3,
+              //   height: 20,
+              //   decoration: new BoxDecoration(
+              //     color: colors,
+              //     shape: BoxShape.rectangle,
+              //   ),
+              //   child: Text(""),
+              // ),
+            ],
+          ),
+        ),
+        Expanded(
+          flex: 7,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              ListTile(
+                title: Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: textColors,
+                  ),
+                ),
+                subtitle: Text(subTile),
+              )
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }

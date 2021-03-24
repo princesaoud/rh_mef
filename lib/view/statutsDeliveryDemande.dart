@@ -45,7 +45,7 @@ class _StatutsDemandeState extends State<StatutsDemande> {
       );
     }
     if (widget.listSteps.length > 3) {
-      // print(widget.listSteps.length);
+      print(widget.listSteps.length);
       return Scaffold(
         appBar: AppBar(
           title: Text("Tracking de votre demande "),
@@ -87,7 +87,7 @@ class _StatutsDemandeState extends State<StatutsDemande> {
       case 1:
         // print('statuts value is 1 ');
         setState(() {
-          for (var i = 0; i <= statutsCode; i++) {
+          for (var i = 0; i < statutsCode; i++) {
             statutsColor[i] = Colors.green;
             textColor[i] = Colors.black;
           }
@@ -96,7 +96,7 @@ class _StatutsDemandeState extends State<StatutsDemande> {
       case 2:
         // print('Statuts value is 2');
         setState(() {
-          for (var i = 0; i <= statutsCode; i++) {
+          for (var i = 0; i < statutsCode; i++) {
             statutsColor[i] = Colors.green;
             textColor[i] = Colors.green;
           }
@@ -105,7 +105,8 @@ class _StatutsDemandeState extends State<StatutsDemande> {
       case 3:
         // print('Statuts value is 3');
         setState(() {
-          for (var i = 0; i <= statutsCode; i++) {
+          // print('in the for loop statuts code is : $statutsCode');
+          for (var i = 0; i < statutsCode; i++) {
             statutsColor[i] = Colors.green;
             textColor[i] = Colors.green;
           }
@@ -120,6 +121,15 @@ class _StatutsDemandeState extends State<StatutsDemande> {
           }
         });
         break;
+      // case 5:
+      //   // print('Statuts value is 3');
+      //   setState(() {
+      //     for (var i = 0; i < statutsCode; i++) {
+      //       statutsColor[i] = Colors.green;
+      //       textColor[i] = Colors.green;
+      //     }
+      //   });
+      //   break;
     }
     // print(documentSnapshot.data()['numeroDemande']);
     return queryResult;

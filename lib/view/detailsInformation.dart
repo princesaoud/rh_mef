@@ -1,7 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:rh_mef/models/actualites_type.dart';
+import 'package:rh_mef/view/demande_dactes.dart';
+import 'package:rh_mef/view/profiledetails.dart';
+import 'package:rh_mef/view/retraiteProcedure.dart';
 import 'package:rh_mef/view/webView.dart';
 
 // const String _kGalleryAssetsPackage = 'flutter_gallery_assets';
@@ -66,6 +70,7 @@ class TravelDestinationItem extends StatelessWidget {
   static const double height = 338.0;
   final Actualites destination;
   final ShapeBorder shape;
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -297,6 +302,8 @@ class DetailsInformations extends StatefulWidget {
 
 class _DetailsInformationsState extends State<DetailsInformations> {
   ShapeBorder _shape;
+  FirebaseAuth auth = FirebaseAuth.instance;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -328,55 +335,166 @@ class _DetailsInformationsState extends State<DetailsInformations> {
       //   ],
       // ),
       body: Scrollbar(
-        child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('News')
-                .orderBy('DatePosted', descending: true)
-                .limit(10)
-                .snapshots(),
-            builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-              if (snapshot.hasError) {
-                print("Something went wrong");
-                print(snapshot.error);
-                return Center(
-                  child: Text("Something went wrong"),
-                );
-              }
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                print("waiting for data");
-                return Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasData) {
-                return ListView.builder(
-                    padding:
-                        const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
-                    itemCount: snapshot.data.docs.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      DocumentSnapshot documentSnapshot =
-                          snapshot.data.docs[index];
-
-                      Actualites actualites = Actualites(
-                          "",
-                          documentSnapshot.data()["Title"],
-                          documentSnapshot.data()["Description"],
-                          documentSnapshot.data()["Author"],
-                          documentSnapshot.data()["DatePosted"],
-                          documentSnapshot.data()["ImageUrl"],
-                          documentSnapshot.data()["Link"]);
-
-                      return Container(
-                        child: Column(
-                          children: [
-                            TappableTravelDestinationItem(
-                                destination: actualites, shape: _shape),
-                          ],
-                        ),
-                      );
-                    });
-              }
-              return Center(child: CircularProgressIndicator());
-            }),
+        child: GridView.count(
+          primary: false,
+          padding: const EdgeInsets.all(20),
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          crossAxisCount: 2,
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(10),
+              child: TextButton(
+                onPressed: () {
+                  FirebaseFirestore.instance
+                      .collection('Profile')
+                      .doc(auth.currentUser.uid)
+                      .snapshots()
+                      .forEach((element) {
+                    print(element.data());
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              ProfileDetails(values: element)),
+                    );
+                  });
+                },
+                child: Column(
+                  children: [
+                    Card(
+                      child: Icon(
+                        Icons.person,
+                        size: 50,
+                        color: Colors.deepOrangeAccent,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        "Profile",
+                        style: TextStyle(color: Colors.deepOrangeAccent),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              color: Colors.orange[100],
+            ),
+            Container(
+              padding: const EdgeInsets.all(10),
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Demande_Actes()),
+                  );
+                },
+                child: Column(
+                  children: [
+                    Card(
+                      child: Icon(
+                        Icons.file_copy_rounded,
+                        size: 50,
+                        color: Colors.deepOrangeAccent,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        "Demande Acte",
+                        style: TextStyle(color: Colors.deepOrangeAccent),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              color: Colors.orange[100],
+            ),
+            Container(
+              padding: const EdgeInsets.all(10),
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => RetraiteProccedure()),
+                  );
+                },
+                child: Column(
+                  children: [
+                    Card(
+                      child: Icon(
+                        Icons.assistant_rounded,
+                        size: 50,
+                        color: Colors.deepOrangeAccent,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        "Retraite",
+                        style: TextStyle(color: Colors.deepOrangeAccent),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              color: Colors.orange[100],
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget myScrolableNewsDetails() {
+    return Scrollbar(
+      child: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('News')
+              .orderBy('DatePosted', descending: true)
+              .limit(10)
+              .snapshots(),
+          builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+            if (snapshot.hasError) {
+              print("Something went wrong");
+              print(snapshot.error);
+              return Center(
+                child: Text("Something went wrong"),
+              );
+            }
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              print("waiting for data");
+              return Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasData) {
+              return ListView.builder(
+                  padding:
+                      const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
+                  itemCount: snapshot.data.docs.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    DocumentSnapshot documentSnapshot =
+                        snapshot.data.docs[index];
+
+                    Actualites actualites = Actualites(
+                        "",
+                        documentSnapshot.data()["Title"],
+                        documentSnapshot.data()["Description"],
+                        documentSnapshot.data()["Author"],
+                        documentSnapshot.data()["DatePosted"],
+                        documentSnapshot.data()["ImageUrl"],
+                        documentSnapshot.data()["Link"]);
+
+                    return Container(
+                      child: Column(
+                        children: [
+                          TappableTravelDestinationItem(
+                              destination: actualites, shape: _shape),
+                        ],
+                      ),
+                    );
+                  });
+            }
+            return Center(child: CircularProgressIndicator());
+          }),
     );
   }
 

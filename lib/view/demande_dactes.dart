@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:commons/commons.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
@@ -72,6 +73,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
 
   String mDeviceToken;
   String matricule;
+  FirebaseAuth auth = FirebaseAuth.instance;
 
   //TODO: DECLARE VARIABLE FOR FILE HANDLING SYSTEM
 
@@ -95,16 +97,18 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             padding: EdgeInsets.symmetric(vertical: 13, horizontal: 70),
             color: Colors.lightGreen,
             onPressed: () async {
+              print('button clicked');
               SharedPreferences prefs = await SharedPreferences.getInstance();
               List<String> values = [
                 '${prefs.getInt('id')}',
                 '${prefs.getString('matricule')}',
                 '${prefs.getString('nom')}',
-                '${prefs.getString('cellulaire')}',
+                '${prefs.getString('tel')}',
                 '${prefs.getString('email')}',
-                '${prefs.getString('date_1ere_ps')}',
-                '${prefs.getString('lib_sce')}',
+                '${prefs.getString('priseDeService')}',
+                '${prefs.getString('fonction')}',
               ];
+
               Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
@@ -120,14 +124,17 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             builder: (BuildContext context,
                 AsyncSnapshot<String> snapshotMatricule) {
               print('matricule est: ${snapshotMatricule.data}');
+              print('userId est: ${auth.currentUser.uid}');
               return StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection("ActeDemand")
-                    .where("matricule", isEqualTo: snapshotMatricule.data)
+                    .where("userId", isEqualTo: "${auth.currentUser.uid}")
                     .orderBy('updated', descending: true)
                     .snapshots(),
                 builder: (BuildContext context,
                     AsyncSnapshot<QuerySnapshot> snapshot) {
+                  //listsSteps variable contains le steps of statutsCode and timeline details
+                  List<ListSteps> listsSteps = [];
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Center(
                       child: CircularProgressIndicator(),
@@ -144,8 +151,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                           //TODO: work on the where clause
                           return TextButton(
                             onPressed: () async {
-                              List<ListSteps> listsSteps = [];
-
                               SharedPreferences sharedprefs =
                                   await SharedPreferences.getInstance();
                               sharedprefs.setInt(
@@ -163,7 +168,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                     title:
                                         'Votre document est complète, et peut etre retirée',
                                     description:
-                                        'Le traitement de votre demande est effectuee avec succes, et votre document peut etre retirer avec succes'),
+                                        'Le traitement de votre demande a ete effectuee avec succes, et votre document peut etre retirer avec succes'),
                               );
 
                               listsSteps.add(
@@ -179,20 +184,22 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                 listsSteps.add(ListSteps(
                                     title: "Demande en ligne reçu",
                                     description:
-                                        "La DRH a reçu vos document avec succes, votre dossier en cours de traitement"));
+                                        "La DRH a reçu votre document avec succès, votre dossier en cours de traitement"));
                                 listsSteps.add(ListSteps(
                                     title:
                                         "Votre demande necessite une signature de votre Direction",
                                     description:
-                                        "La DRH a traité vos documents, veuillez passer les recupperer pour une signature supplementaire avant la proccedure finale"));
+                                        "La DRH a traité votre document, veuillez passer le rechercher pour la signature de votre hierachie"));
                                 listsSteps.add(ListSteps(
-                                    title: "La DRH a réçu vos documents signé",
+                                    title:
+                                        "Attestation de presence de solde reçu après signature de la hiérachie",
                                     description:
-                                        "Vous deposez les documents physique au sein de la DRH/MEF pour initialiser la proccedure de votre de demande"));
+                                        "L'Attestation de solde recu par la DRH, en cours de validation"));
                                 listsSteps.add(ListSteps(
-                                    title: "Votre demande est fin prête",
+                                    title:
+                                        "Attestation de presence de solde signé",
                                     description:
-                                        "Vous pouvez passer recupperer votre document"));
+                                        "Votre demande a ete signe, vous pouvez passer la recupperer a la DRH"));
                               }
 
                               Navigator.push(
@@ -204,7 +211,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                             },
                             child: statusCode(
                                 snapshot.data.docs[index].data()['statuts'],
-                                numeroDemande),
+                                numeroDemande,
+                                listsSteps),
                           );
                           // }
                           return Container();

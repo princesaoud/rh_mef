@@ -40,10 +40,13 @@ class DocumentSelected extends StatelessWidget {
                       //   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       // ),
                       Expanded(
-                        child: Text(
-                          '${listDocuments[index]}',
-                          style: TextStyle(fontSize: 20),
-                          textAlign: TextAlign.center,
+                        child: ListTile(
+                          title: Text(
+                            '${listDocuments[index]}',
+                            style: TextStyle(fontSize: 20),
+                            textAlign: TextAlign.center,
+                          ),
+                          leading: Icon(Icons.check_box),
                         ),
                       ),
                       // Icon(

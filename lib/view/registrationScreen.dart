@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,31 +7,31 @@ import 'package:rh_mef/main.dart';
 class RegistrationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    FirebaseAuth.instance.authStateChanges().listen((User user) {
-      if (user == null) {
-        return Scaffold(
-            appBar: AppBar(
-              title: Center(
-                child: Text(
-                  'Inscription',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              leading: IconButton(
-                onPressed: () {
-                  Navigator.pushReplacement(context,
-                      MaterialPageRoute(builder: (context) => MyApp()));
-                },
-                icon: Icon(Icons.arrow_back),
-              ),
+    // FirebaseAuth.instance.authStateChanges().listen((User user) {
+    //   if (user == null) {
+    return Scaffold(
+        appBar: AppBar(
+          title: Center(
+            child: Text(
+              'Inscription',
+              textAlign: TextAlign.center,
             ),
-            body: RegistrationContent());
-      } else {
-        print('User is signed in!');
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (context) => MyApp()));
-      }
-    });
+          ),
+          leading: IconButton(
+            onPressed: () {
+              Navigator.pushReplacement(
+                  context, MaterialPageRoute(builder: (context) => MyApp()));
+            },
+            icon: Icon(Icons.arrow_back),
+          ),
+        ),
+        body: RegistrationContent());
+    //   } else {
+    //     print('User is signed in!');
+    //     Navigator.pushReplacement(
+    //         context, MaterialPageRoute(builder: (context) => MyApp()));
+    //   }
+    // });
     return Container();
   }
 }
@@ -102,6 +103,23 @@ class _RegistrationContentState extends State<RegistrationContent> {
                   } catch (e) {
                     print(e);
                   }
+                  FirebaseAuth auth = FirebaseAuth.instance;
+
+                  FirebaseFirestore.instance
+                      .collection("Profile")
+                      .doc(auth.currentUser.uid)
+                      .set({
+                    "email": '',
+                    "matricule": '',
+                    "nom": '',
+                    "priseDeService": '',
+                    "tel": '',
+                    "fonction": '',
+                    "userId": '${auth.currentUser.uid}',
+                    "token": '',
+                  });
+                  Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (context) => MyApp()));
                 },
                 style: TextButton.styleFrom(
                     primary: Colors.white, backgroundColor: Colors.orange),

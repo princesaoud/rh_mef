@@ -3,12 +3,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:rh_mef/main.dart';
 import 'package:rh_mef/net/firebase.dart';
+import 'package:rh_mef/view/passwordreset.dart';
 
 class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Text(''),
     );
   }
@@ -69,11 +71,13 @@ class _LoginContentState extends State<LoginContent> {
                   ),
                 ),
               ),
-              FlatButton(
+              TextButton(
                 onPressed: () {
                   //forgot password screen
+                  print('Password forget clicked');
+                  Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (context) => PasswordReset()));
                 },
-                textColor: Colors.blue,
                 child: Text('Mot de passe oublié'),
               ),
               Container(

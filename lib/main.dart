@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:rh_mef/constantes.dart';
@@ -11,6 +12,7 @@ import 'package:rh_mef/net/firebase.dart';
 import 'package:rh_mef/view/complaint.dart';
 import 'package:rh_mef/view/demande_dactes.dart';
 import 'package:rh_mef/view/detailsInformation.dart';
+import 'package:rh_mef/view/passwordreset.dart';
 import 'package:rh_mef/view/profiledetails.dart';
 import 'package:rh_mef/view/registrationScreen.dart';
 import 'package:rh_mef/view/retraiteProcedure.dart';
@@ -56,12 +58,13 @@ void main() async {
   //   // Minimum frequency is 15 min. Android will automatically change your frequency to 15 min if you have configured a lower frequency.
   //   frequency: Duration(seconds: 5),
   // );
-  FirebaseMessaging().getToken().then((token) async {
-    await FirebaseFirestore.instance
-        .collection("tokens")
-        .doc(token)
-        .set({'token': token});
-  });
+  SharedPreferences.setMockInitialValues({});
+  // FirebaseMessaging().getToken().then((token) async {
+  //   await FirebaseFirestore.instance
+  //       .collection("tokens")
+  //       .doc(token)
+  //       .set({'token': token});
+  // });
 
   runApp(MyApp());
 }
@@ -80,7 +83,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'DRHMEF ONLINE',
+      title: 'DRH/MEF ONLINE',
       theme: ThemeData(
         primarySwatch: Colors.orange,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -103,6 +106,7 @@ class _LoginContentState extends State<LoginContent> {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
   TwilioFlutter twilioFlutter;
   FirebaseAuth auth = FirebaseAuth.instance;
+  bool _obscurePassword;
 
   getStatutsUser() async {
     // SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
@@ -117,6 +121,7 @@ class _LoginContentState extends State<LoginContent> {
   @override
   void initState() {
     super.initState();
+    _obscurePassword = true;
     twilioFlutter = TwilioFlutter(
         accountSid: 'AC4cb8ad07e86ad04b7cd18a2737796b3d',
         authToken: '9c1202163f062c18f0b29a2e3a4a7e30',
@@ -288,55 +293,103 @@ class _LoginContentState extends State<LoginContent> {
               Container(
                 padding: EdgeInsets.fromLTRB(10, 10, 10, 0),
                 child: TextField(
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   controller: passwordController,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: 'Mot de passe',
+                    suffixIcon: IconButton(
+                      icon: Icon(Icons.lock),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
                   ),
                 ),
               ),
-              FlatButton(
+              TextButton(
                 onPressed: () {
                   //forgot password screen
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => PasswordReset()));
                 },
-                textColor: Colors.blue,
                 child: Text('Mot de passe oublié'),
               ),
-              FlatButton(
+              TextButton(
                 onPressed: () {
                   //create new user
-                  Navigator.pushReplacement(
+                  Navigator.push(
                       context,
                       MaterialPageRoute(
                           builder: (context) => RegistrationScreen()));
                 },
-                textColor: Colors.black,
                 child: Text('S\'inscrire'),
               ),
               Container(
-                  height: 50,
-                  padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                        primary: Colors.white, backgroundColor: Colors.orange),
-                    child: Text('Se Connecter'),
-                    onPressed: () async {
-                      String email = nameController.text;
-                      String password = passwordController.text;
-                      // bool result = await getLoginAgent([matricule, password]);
-                      bool result = await getLoginAgentFirebaseWay(
-                          email: email, password: password);
-                      if (result == false) {
-                        // print(result);
-                        errorDialog(context,
-                            'Erreur d\'authentification Matricule ou mot de passe erroné.');
-                      } else {
-                        Navigator.pushReplacement(context,
-                            MaterialPageRoute(builder: (context) => MyApp()));
-                      }
-                    },
-                  )),
+                height: 50,
+                padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                      primary: Colors.white, backgroundColor: Colors.orange),
+                  child: Text('Se Connecter'),
+                  onPressed: () async {
+                    String email = nameController.text.trim();
+                    String password = passwordController.text;
+                    // bool result = await getLoginAgent([matricule, password]);
+                    bool result = await getLoginAgentFirebaseWay(
+                        email: email, password: password, context: context);
+                    if (result == false) {
+                      // print(result);
+                      errorDialog(context,
+                          'Erreur d\'authentification Matricule ou mot de passe erroné.');
+                    } else {
+                      CollectionReference reference =
+                          FirebaseFirestore.instance.collection("ActeDemand");
+                      // DocumentReference actDemande = reference.doc(reference.parameters.);
+                      FirebaseMessaging().getToken().then((token) async {
+                        // await actDemande.update({"deviceId": token});
+                        print('the token of device: $token');
+                        print(
+                            'the currentUserId of device: ${auth.currentUser.uid}');
+                        FirebaseFirestore.instance
+                            .collection("ActeDemand")
+                            .doc(auth.currentUser.uid)
+                            .set({
+                          'token': token,
+                          'email': auth.currentUser.email
+                        });
+                      });
+                      FirebaseFirestore.instance
+                          .collection('Profile')
+                          .doc(auth.currentUser.uid)
+                          .snapshots()
+                          .forEach((element) {
+                        print(element.data());
+                        setState(() async {
+                          SharedPreferences sharedPreferences =
+                              await SharedPreferences.getInstance();
+                          sharedPreferences.setString(
+                              'matricule', element.data()['matricule']);
+                          sharedPreferences.setString(
+                              'nom', element.data()['nom']);
+                          sharedPreferences.setString(
+                              'tel', element.data()['tel']);
+                          sharedPreferences.setString(
+                              'email', element.data()['email']);
+                          sharedPreferences.setString('priseDeService',
+                              element.data()['priseDeService']);
+                          sharedPreferences.setString(
+                              'fonction', element.data()['fonction']);
+                        });
+                      });
+                      Navigator.pushReplacement(context,
+                          MaterialPageRoute(builder: (context) => MyApp()));
+                    }
+                  },
+                ),
+              ),
             ],
           )),
     );
@@ -391,7 +444,7 @@ class _LoginContentState extends State<LoginContent> {
                                   .snapshots()
                                   .forEach((element) {
                                 print(element.data());
-                                Navigator.pushReplacement(
+                                Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
@@ -450,7 +503,7 @@ class _LoginContentState extends State<LoginContent> {
                               // Update the state of the app
                               // ...
                               // Then close the drawer
-                              Navigator.pushReplacement(
+                              Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) => Demande_Actes()),
@@ -458,53 +511,53 @@ class _LoginContentState extends State<LoginContent> {
                               // Navigator.pop(context);
                             },
                           ),
-                          // Divider(
-                          //   thickness: 2,
-                          // ),
-
-                          //TODO: retreat field setting up
-                          // ListTile(
-                          //   title: Text(Constants.retraite),
-                          //   leading: Icon(Icons.assistant),
-                          //   onTap: () {
-                          //     // Update the state of the app
-                          //     // ...
-                          //     // Then close the drawer
-                          //     Navigator.pushReplacement(
-                          //       context,
-                          //       MaterialPageRoute(
-                          //           builder: (context) => RetraiteProccedure()),
-                          //     );
-                          //     // Navigator.pop(context);
-                          //   },
-                          // ),
                           Divider(
                             thickness: 2,
                           ),
+
+                          // TODO: retreat field setting up
                           ListTile(
-                            title: Text(Constants.infos),
-                            leading: Icon(Icons.info),
+                            title: Text(Constants.retraite),
+                            leading: Icon(Icons.assistant),
                             onTap: () {
                               // Update the state of the app
                               // ...
                               // Then close the drawer
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //       builder: (context) => StatutsDemande()),
-                              // );
-                              // sendSms();
-                              // _showNotification('abc', 'efg');
-                              // createNewDemandeActe([
-                              //   'Motif is the motivation',
-                              //   'Nature Acte',
-                              //   'the piece jointe link'
-                              // ]);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => RetraiteProccedure()),
+                              );
+                              // Navigator.pop(context);
                             },
                           ),
                           Divider(
                             thickness: 2,
                           ),
+                          // ListTile(
+                          //   title: Text(Constants.infos),
+                          //   leading: Icon(Icons.info),
+                          //   onTap: () {
+                          //     // Update the state of the app
+                          //     // ...
+                          //     // Then close the drawer
+                          //     // Navigator.push(
+                          //     //   context,
+                          //     //   MaterialPageRoute(
+                          //     //       builder: (context) => StatutsDemande()),
+                          //     // );
+                          //     // sendSms();
+                          //     // _showNotification('abc', 'efg');
+                          //     // createNewDemandeActe([
+                          //     //   'Motif is the motivation',
+                          //     //   'Nature Acte',
+                          //     //   'the piece jointe link'
+                          //     // ]);
+                          //   },
+                          // ),
+                          // Divider(
+                          //   thickness: 2,
+                          // ),
                         ],
                       ),
                     ),
@@ -527,7 +580,7 @@ class _LoginContentState extends State<LoginContent> {
                       child: TextButton(
                         onPressed: () {
                           auth.signOut();
-                          Navigator.pushReplacement(
+                          Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) => MyApp()),
                           );
@@ -833,30 +886,31 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     ),
                     Container(
+                        padding: EdgeInsets.only(bottom: 30),
                         child: TextButton(
-                      style: ButtonStyle(
-                        backgroundColor:
-                            MaterialStateProperty.all<Color>(Colors.red),
-                      ),
-                      onPressed: () {
-                        print('logout button clicked');
-                      },
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.highlight_off,
-                            color: Colors.white,
+                          style: ButtonStyle(
+                            backgroundColor:
+                                MaterialStateProperty.all<Color>(Colors.red),
                           ),
-                          Expanded(
-                            child: Text(
-                              "Deconnecter",
-                              style: TextStyle(color: Colors.white),
-                              textAlign: TextAlign.center,
-                            ),
-                          )
-                        ],
-                      ),
-                    ))
+                          onPressed: () {
+                            print('logout button clicked');
+                          },
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.highlight_off,
+                                color: Colors.white,
+                              ),
+                              Expanded(
+                                child: Text(
+                                  "Deconnecter",
+                                  style: TextStyle(color: Colors.white),
+                                  textAlign: TextAlign.center,
+                                ),
+                              )
+                            ],
+                          ),
+                        ))
                   ],
                 ),
               ),

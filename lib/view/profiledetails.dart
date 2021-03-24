@@ -13,11 +13,13 @@ class ProfileDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: ProfileDetailsContent(
-        values: values,
-      ),
-    );
+    if (values != null)
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: ProfileDetailsContent(
+          values: values,
+        ),
+      );
   }
 }
 
@@ -40,12 +42,26 @@ class _ProfileDetailsContentState extends State<ProfileDetailsContent> {
   FirebaseAuth auth = FirebaseAuth.instance;
   @override
   Widget build(BuildContext context) {
-    myControllerMatricule.text = "${widget.values.data()['matricule']}";
-    myControllerNom.text = "${widget.values.data()['nom']}";
-    myControllerTel.text = "${widget.values.data()['tel']}";
-    myControllerEmail.text = "${widget.values.data()['email']}";
-    myControllerCalendar.text = "${widget.values.data()['priseDeService']}";
-    myControllerWork.text = "${widget.values.data()['fonction']}";
+    if (widget.values != null) {
+      myControllerMatricule.text = widget.values.data()['matricule'] != null
+          ? "${widget.values.data()['matricule']}"
+          : "";
+      myControllerNom.text = widget.values.data()['nom'] != null
+          ? "${widget.values.data()['nom']}"
+          : "";
+      myControllerTel.text = widget.values.data()['tel'] != null
+          ? "${widget.values.data()['tel']}"
+          : "";
+      myControllerEmail.text = widget.values.data()['email'] != null
+          ? "${widget.values.data()['email']}"
+          : "";
+      myControllerCalendar.text = widget.values.data()['priseDeService'] != null
+          ? "${widget.values.data()['priseDeService']}"
+          : "";
+      myControllerWork.text = widget.values.data()['fonction'] != null
+          ? "${widget.values.data()['fonction']}"
+          : "";
+    }
     return Scaffold(
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by

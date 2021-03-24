@@ -12,6 +12,7 @@ import 'package:http/http.dart' as http;
 import 'package:rh_mef/constantes.dart';
 import 'package:rh_mef/models/actualites_type.dart';
 import 'package:rh_mef/models/mDemandeActe.dart';
+import 'package:rh_mef/models/stepsActe.dart';
 import 'package:rh_mef/models/userDetails.dart';
 import 'package:twilio_flutter/twilio_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -116,6 +117,9 @@ Future<void> userProfileSetup(UserDetails userDetails, String userId) async {
     sharedPreferences.setString('priseDeService', userDetails.prise_service);
     sharedPreferences.setString('fonction', userDetails.fonction);
     // bool pushNotification = await callOnFcmApiSendPushNotifications(token);
+    // FirebaseFirestore.instance.collection("Retreate").doc('$userId').set({
+    //   'step': 0,
+    // });
   });
 
   return;
@@ -212,11 +216,12 @@ Future<bool> callOnFcmApiSendPushNotifications(
   }
 }
 
-Widget statusCode(int status, int numeroDemande) {
+Widget statusCode(int status, int numeroDemande, List<ListSteps> listSteps) {
   String tempResult = "";
   switch (status) {
     case 0:
       tempResult = "Votre demande est en cours de validation";
+      // tempResult = "${listSteps[0]}";
       return Card(
         child: ListTile(
           leading: Icon(Icons.pending_actions_rounded),
@@ -229,9 +234,46 @@ Widget statusCode(int status, int numeroDemande) {
       break;
     case 1:
       tempResult = "Votre demande est validée et est cours de traitement";
+      // tempResult = "${listSteps[1]}";
       return Card(
         child: ListTile(
           leading: Icon(Icons.autorenew),
+          title: Text('Numero demande: $numeroDemande'),
+          subtitle: Text(
+            'Progression: $tempResult',
+          ),
+        ),
+      );
+      break;
+    case 2:
+      // tempResult = "Votre demande est disponible et peut etre retiré";
+      // tempResult = "${listSteps[2]}";
+      tempResult = "Votre demande est validée et est cours de traitement";
+
+      return Card(
+        child: ListTile(
+          leading: Icon(
+            Icons.autorenew_sharp,
+            color: Colors.green,
+          ),
+          title: Text('Numero demande: $numeroDemande'),
+          subtitle: Text(
+            'Progression: $tempResult',
+          ),
+        ),
+      );
+      break;
+    case 3:
+      // tempResult = "Votre demande a ete retire";
+      // tempResult = "${listSteps[3]}";
+      tempResult = "Votre demande est disponible et peut etre retiré";
+
+      return Card(
+        child: ListTile(
+          leading: Icon(
+            Icons.download_done_sharp,
+            color: Colors.green,
+          ),
           title: Text('Numero demande: $numeroDemande'),
           subtitle: Text(
             'Progression: $tempResult',
@@ -245,36 +287,6 @@ Widget statusCode(int status, int numeroDemande) {
         child: ListTile(
           leading: Icon(
             Icons.dangerous,
-            color: Colors.red,
-          ),
-          title: Text('Numero demande: $numeroDemande'),
-          subtitle: Text(
-            'Progression: $tempResult',
-          ),
-        ),
-      );
-      break;
-    case 2:
-      tempResult = "Votre demande est disponible et peut etre retiré";
-      return Card(
-        child: ListTile(
-          leading: Icon(
-            Icons.check,
-            color: Colors.green,
-          ),
-          title: Text('Numero demande: $numeroDemande'),
-          subtitle: Text(
-            'Progression: $tempResult',
-          ),
-        ),
-      );
-      break;
-    case 3:
-      tempResult = "Votre demande a ete retire";
-      return Card(
-        child: ListTile(
-          leading: Icon(
-            Icons.download_done_sharp,
             color: Colors.green,
           ),
           title: Text('Numero demande: $numeroDemande'),
@@ -314,17 +326,87 @@ createNewDemandeActe(List<String> arguments) async {
   }
 }
 
-getLoginAgentFirebaseWay({String email, String password}) async {
+getLoginAgentFirebaseWay(
+    {String email, String password, BuildContext context}) async {
   try {
     UserCredential userCredential = await FirebaseAuth.instance
         .signInWithEmailAndPassword(email: "$email", password: "$password");
   } on FirebaseAuthException catch (e) {
     if (e.code == 'user-not-found') {
       print('No user found for that email.');
+      errorDialog(
+          context, "Votre email ne correspond a aucun compte de nos membres");
     } else if (e.code == 'wrong-password') {
       print('Wrong password provided for that user.');
+      errorDialog(context, "Mot de passe erroné");
     }
   }
+}
+
+List<MaterialColor> colorForRetreateList(int value) {
+  // for(var i = 0 ; i < value; i ++){
+  //   return Icon(Icons.check_box);
+  // }
+  List<MaterialColor> listColor = [
+    Colors.grey,
+    Colors.grey,
+    Colors.grey,
+    Colors.grey,
+    Colors.grey,
+    Colors.grey,
+    Colors.grey,
+  ];
+  switch (value) {
+    case 0:
+      return listColor;
+      break;
+    case 1:
+      listColor[0] = Colors.green;
+      return listColor;
+    case 2:
+      for (var i = 0; i < value; i++) {
+        listColor[i] = Colors.green;
+      }
+      return listColor;
+      break;
+    case 3:
+      for (var i = 0; i < value; i++) {
+        listColor[i] = Colors.green;
+      }
+      return listColor;
+      break;
+    case 4:
+      for (var i = 0; i < value; i++) {
+        listColor[i] = Colors.green;
+      }
+      return listColor;
+      break;
+    case 5:
+      for (var i = 0; i < value; i++) {
+        listColor[i] = Colors.green;
+      }
+      return listColor;
+      break;
+    case 6:
+      for (var i = 0; i < value; i++) {
+        listColor[i] = Colors.green;
+      }
+      return listColor;
+      break;
+    case 7:
+      for (var i = 0; i < value; i++) {
+        listColor[i] = Colors.green;
+      }
+      return listColor;
+      break;
+  }
+  return listColor;
+}
+
+@override
+Future<void> resetPassword(String email) async {
+  FirebaseAuth auth = FirebaseAuth.instance;
+  await auth.sendPasswordResetEmail(email: email);
 }
 
 Future<bool> getLoginAgent(List<String> arguments) async {
