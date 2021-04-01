@@ -60,66 +60,131 @@ class _RetraiteProccedureState extends State<RetraiteProccedure> {
       body: Card(
         elevation: 2,
         margin: EdgeInsets.all(10),
-        child: Padding(
-          padding: const EdgeInsets.only(top: 30),
-          child: StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection("Retreate")
-                  .doc('${auth.currentUser.uid}')
-                  .snapshots(),
-              builder: (context, snapshot) {
+        child: StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection("Retreate")
+                .doc('${auth.currentUser.uid}')
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+              if (snapshot.data == null ||
+                  snapshot == null ||
+                  snapshot.data.data() == null) {
+                return Center(
+                  child: Container(),
+                );
+              }
+              if (snapshot.hasData) {
+                print('we do have data');
                 //checking for colors
+                // if (snapshot.data.data()['steps'] != null) {
                 final int value = snapshot.data.data()['steps'];
                 List<MaterialColor> listColors = colorForRetreateList(value);
-                return ListView(
-                  children: <Widget>[
-                    //TODO: ADD TITLE
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => DocumentSelected(
-                                      listDocuments: listDocumentsFP,
-                                    )));
-                      },
-                      child: Container(
-                        child: timelineRow(
-                            "Constitution des documents a la DRH/MEF",
-                            "Veuillez soumettre es documents, nécessaire pour la constitution de votre dossier\nCliquez pour voir la liste",
-                            listColors[0],
-                            listColors[0]),
+                return Column(
+                  children: [
+                    Container(
+                      child: Expanded(
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: TextButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                DocumentSelected(
+                                                  listDocuments:
+                                                      listDocumentsFP,
+                                                  title: 'fonctionPublique',
+                                                )));
+                                  },
+                                  style: TextButton.styleFrom(
+                                    primary: Colors.white,
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                  child: Text(
+                                    "Cliquez pour voir la liste des documents fournis pour la premiere etape",
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            // timelineRow(
+                            //     "Constitution des documents a la DRH/MEF",
+                            //     "Veuillez soumettre es documents, nécessaire pour la constitution de votre dossier\nCliquez ici",
+                            //     listColors[0],
+                            //     listColors[0]),
+                          ],
+                        ),
                       ),
+                    ),
+                    Divider(
+                      height: 3,
                     ),
                     Container(
                       child: timelineRow(
-                          "Votre document transmis a la Fonction Publique",
+                          "Votre document a ete transmis a la Fonction Publique",
                           "Vos documents, sont en traitement au bureau de la fonction publique",
                           listColors[1],
                           listColors[1]),
                     ),
                     Container(
-                        child: dotlineTimeline(
-                      "Document de radiation établie",
-                      " ",
-                      listColors[2],
-                      listColors[2],
-                    )),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => DocumentSelected(
-                                      listDocuments: listDocumentsCgrae,
-                                    )));
-                      },
-                      child: Container(
-                        child: timelineRow(
-                            "Constitution des documents pour la CGRAE",
-                            "Veuillez soumettre les documents, nécessaire pour la constitution de votre de la CGRAE \nCliquez pour voir la liste",
-                            listColors[3],
-                            listColors[3]),
+                      child: dotlineTimeline(
+                        "Document de radiation établie",
+                        " ",
+                        listColors[2],
+                        listColors[2],
+                      ),
+                    ),
+                    Divider(
+                      height: 3,
+                    ),
+                    Container(
+                      child: Expanded(
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: TextButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                DocumentSelected(
+                                                  listDocuments:
+                                                      listDocumentsFP,
+                                                  title: 'cgrae',
+                                                )));
+                                  },
+                                  style: TextButton.styleFrom(
+                                    primary: Colors.white,
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                  child: Text(
+                                    "Cliquez pour voir la liste des documents fournis pour la Deuxieme etape",
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            // timelineRow(
+                            //     "Constitution des documents a la DRH/MEF",
+                            //     "Veuillez soumettre es documents, nécessaire pour la constitution de votre dossier\nCliquez ici",
+                            //     listColors[0],
+                            //     listColors[0]),
+                          ],
+                        ),
                       ),
                     ),
                     Container(
@@ -131,11 +196,12 @@ class _RetraiteProccedureState extends State<RetraiteProccedure> {
                     ),
                     Container(
                       child: timelineRow(
-                        "Votre document transmis a la CGRAE",
+                        "Votre document a ete transmis a la CGRAE",
                         "Vos documents, sont en traitement au bureau de la CGRAE",
                         listColors[5],
                         listColors[5],
                       ),
+                      // ignore: missing_return
                     ),
                     Container(
                       child: timelineLastRow(
@@ -147,8 +213,19 @@ class _RetraiteProccedureState extends State<RetraiteProccedure> {
                     ),
                   ],
                 );
-              }),
-        ),
+                // }
+                // print(snapshot.data.data());
+                // print('Snapshot seems to be null');
+                // //snapshot.data is null
+                // return Center(
+                //   child: Card(),
+                // );
+              } else {
+                return Center(
+                  child: Text('No Data'),
+                );
+              }
+            }),
       ),
     );
   }

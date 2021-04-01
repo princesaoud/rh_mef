@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rh_mef/constantes.dart';
 import 'package:rh_mef/main.dart';
+import 'package:rh_mef/models/ActeModel.dart';
 import 'package:rh_mef/models/mDemandeActe.dart';
 import 'package:rh_mef/models/stepsActe.dart';
 import 'package:rh_mef/net/firebase.dart';
@@ -135,6 +136,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                     AsyncSnapshot<QuerySnapshot> snapshot) {
                   //listsSteps variable contains le steps of statutsCode and timeline details
                   List<ListSteps> listsSteps = [];
+                  List<ActeModel> listsActe = [];
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Center(
                       child: CircularProgressIndicator(),
@@ -157,30 +159,10 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                   'numeroDemande',
                                   snapshot.data.docs[index]
                                       .data()['numeroDemande']);
-                              listsSteps.add(
-                                ListSteps(
-                                    title: 'Votre document a ete valide',
-                                    description:
-                                        'Vos document soumis, sont conforme et vos demande d\'acte est encours de traitement'),
-                              );
-                              listsSteps.add(
-                                ListSteps(
-                                    title:
-                                        'Votre document est complète, et peut etre retirée',
-                                    description:
-                                        'Le traitement de votre demande a ete effectuee avec succes, et votre document peut etre retirer avec succes'),
-                              );
-
-                              listsSteps.add(
-                                ListSteps(
-                                    title: 'Vous avez retirée votre demande',
-                                    description:
-                                        'Votre document viens d\'etre retire avec succes '),
-                              );
-                              if (demandeName
-                                  .contains("Attestation de présence solde")) {
+                              listsSteps.clear();
+                              if (demandeName ==
+                                  "Attestation de présence solde") {
                                 // print('attestion de presence de solde is true');
-                                listsSteps.clear();
                                 listsSteps.add(ListSteps(
                                     title: "Demande en ligne reçu",
                                     description:
@@ -200,6 +182,27 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                         "Attestation de presence de solde signé",
                                     description:
                                         "Votre demande a ete signe, vous pouvez passer la recupperer a la DRH"));
+                              } else {
+                                listsSteps.add(
+                                  ListSteps(
+                                      title: 'Votre document a ete valide',
+                                      description:
+                                          'Vos document soumis, sont conforme et vos demande d\'acte est encours de traitement'),
+                                );
+                                listsSteps.add(
+                                  ListSteps(
+                                      title:
+                                          'Votre document est complète, et peut etre retirée',
+                                      description:
+                                          'Le traitement de votre demande a ete effectuee avec succes, et votre document peut etre retirer avec succes'),
+                                );
+
+                                listsSteps.add(
+                                  ListSteps(
+                                      title: 'Vous avez retirée votre demande',
+                                      description:
+                                          'Votre document viens d\'etre retire avec succes '),
+                                );
                               }
 
                               Navigator.push(
@@ -447,7 +450,7 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
                     piece,
                     motif,
                     numeroDemande,
-                    0,
+                    1,
                     true);
                 demandeActeSetup(_demandeacte);
                 print('demande d\'acte envoye');

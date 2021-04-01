@@ -44,7 +44,7 @@ class _StatutsDemandeState extends State<StatutsDemande> {
         ),
       );
     }
-    if (widget.listSteps.length > 3) {
+    if (widget.listSteps.length >= 4) {
       print(widget.listSteps.length);
       return Scaffold(
         appBar: AppBar(
@@ -53,16 +53,16 @@ class _StatutsDemandeState extends State<StatutsDemande> {
         ),
         body: presenceSoldeTimeLine(),
       );
+    } else {
+      print("le nombre de listSteps ${widget.listSteps.length}");
+      return Scaffold(
+        appBar: AppBar(
+          title: Text("Tracking de votre demande "),
+          backgroundColor: Colors.orange,
+        ),
+        body: orderTimeLine(),
+      );
     }
-    // print(widget.listSteps.length);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Tracking de votre demande "),
-        backgroundColor: Colors.orange,
-      ),
-      body: orderTimeLine(),
-    );
   }
 
   getNumeroDemande() async {

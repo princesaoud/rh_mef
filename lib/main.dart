@@ -335,16 +335,28 @@ class _LoginContentState extends State<LoginContent> {
                       primary: Colors.white, backgroundColor: Colors.orange),
                   child: Text('Se Connecter'),
                   onPressed: () async {
-                    String email = nameController.text.trim();
+                    bool isInternet = await internetChecking();
+                    if (!isInternet) {
+                      errorDialog(
+                          context, 'Vous n\'avez de connection internet.');
+                    }
+                    // showLoaderDialog(context);
+                    String email = nameController.text.trim().toLowerCase();
                     String password = passwordController.text;
                     // bool result = await getLoginAgent([matricule, password]);
                     bool result = await getLoginAgentFirebaseWay(
                         email: email, password: password, context: context);
                     if (result == false) {
+                      // Navigator.pop(context);
                       // print(result);
                       errorDialog(context,
                           'Erreur d\'authentification Matricule ou mot de passe erroné.');
                     } else {
+                      // Navigator.pop(context);
+
+                      //procedure pour changer le token, utiliser pour recevoir les notifications
+                      //dans toute les demande d'acte, avec celui de l'utilisateur actuelle
+
                       CollectionReference reference =
                           FirebaseFirestore.instance.collection("ActeDemand");
                       // DocumentReference actDemande = reference.doc(reference.parameters.);
@@ -353,13 +365,19 @@ class _LoginContentState extends State<LoginContent> {
                         print('the token of device: $token');
                         print(
                             'the currentUserId of device: ${auth.currentUser.uid}');
+                        QuerySnapshot data = await FirebaseFirestore.instance
+                            .collection("ActeDemand")
+                            .where('email', isEqualTo: email)
+                            .get();
+                        String value = data.docs.first.data()['key'];
+                        print(value);
                         FirebaseFirestore.instance
                             .collection("ActeDemand")
-                            .doc(auth.currentUser.uid)
-                            .set({
-                          'token': token,
-                          'email': auth.currentUser.email
-                        });
+                            .doc(value)
+                            .set(
+                          {'token': token, 'email': auth.currentUser.email},
+                          SetOptions(merge: true),
+                        );
                       });
                       FirebaseFirestore.instance
                           .collection('Profile')
@@ -430,6 +448,15 @@ class _LoginContentState extends State<LoginContent> {
                                   fit: BoxFit.fill),
                               color: Colors.orange,
                             ),
+                          ),
+                          Expanded(
+                            child: Center(
+                              child: Text(
+                                  'Bienvenu, ${auth.currentUser.displayName}'),
+                            ),
+                          ),
+                          Divider(
+                            thickness: 3,
                           ),
                           ListTile(
                             title: Text("Profile"),
@@ -609,6 +636,25 @@ class _LoginContentState extends State<LoginContent> {
           );
         }
         return CircularProgressIndicator();
+      },
+    );
+  }
+
+  showLoaderDialog(BuildContext context) {
+    AlertDialog alert = AlertDialog(
+      content: new Row(
+        children: [
+          CircularProgressIndicator(),
+          Container(
+              margin: EdgeInsets.only(left: 7), child: Text("Loading...")),
+        ],
+      ),
+    );
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
       },
     );
   }

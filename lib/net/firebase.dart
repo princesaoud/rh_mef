@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:convert' as convert;
+import 'dart:io';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -19,6 +20,19 @@ import 'package:uuid/uuid.dart';
 
 // class CustomFirebaseMangement {}
 String userKey = "";
+Future<bool> internetChecking() async {
+  try {
+    final result = await InternetAddress.lookup('google.com');
+    if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+      print('connected');
+      return true;
+    }
+  } on SocketException catch (_) {
+    print('not connected');
+    return false;
+  }
+  return false;
+}
 
 Future<void> userSetup(String designation, String number, String email,
     String complaintType, String observation) async {

@@ -1,3 +1,6 @@
+import 'package:rh_mef/models/ActeModel.dart';
+import 'package:rh_mef/models/stepsActe.dart';
+
 class Constants {
   static const String settings = "Settings";
   static const String dmd_act = "Demande d'acte";
@@ -32,5 +35,31 @@ class Constants {
     "DOSSIER DEMANDE DE VISA",
     "DOSSIER DE RETRAITE",
     "DE DOSSIER DE CONCOURS",
+  ];
+
+  static List<ActeModel> listsActes = [
+    ActeModel(
+        acteCode: 001,
+        acteName: "Attestation de présence solde",
+        acteMotif: 001,
+        steps: [
+          ListSteps(
+              title: "Demande en ligne recu",
+              description:
+                  "La DRH a reçu votre document avec succès, votre dossier en cours de traitement"),
+          ListSteps(
+              title: "Votre demande necessite une signature de votre Direction",
+              description:
+                  "La DRH a traité votre document, veuillez passer le rechercher pour la signature de votre hierachie"),
+          ListSteps(
+              title:
+                  "Attestation de presence de solde reçu après signature de la hiérachie",
+              description:
+                  "L'Attestation de solde recu par la DRH, en cours de validation"),
+          ListSteps(
+              title: "Attestation de presence de solde signé",
+              description:
+                  "Votre demande a ete signe, vous pouvez passer la recupperer a la DRH"),
+        ]),
   ];
 }
