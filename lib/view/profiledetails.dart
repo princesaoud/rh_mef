@@ -20,6 +20,11 @@ class ProfileDetails extends StatelessWidget {
           values: values,
         ),
       );
+    else
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: ProfileDetailsContent(),
+      );
   }
 }
 
@@ -42,7 +47,7 @@ class _ProfileDetailsContentState extends State<ProfileDetailsContent> {
   FirebaseAuth auth = FirebaseAuth.instance;
   @override
   Widget build(BuildContext context) {
-    if (widget.values != null) {
+    if (widget.values.data() != null) {
       myControllerMatricule.text = widget.values.data()['matricule'] != null
           ? "${widget.values.data()['matricule']}"
           : "";

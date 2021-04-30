@@ -1,6 +1,6 @@
 class ListSteps {
-  String title;
-  String description;
+  final String title;
+  final String description;
 
-  ListSteps({this.title, this.description});
+  const ListSteps({this.title, this.description});
 }

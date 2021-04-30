@@ -1,15 +1,18 @@
+import 'dart:io';
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:commons/commons.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:provider/provider.dart';
 import 'package:rh_mef/constantes.dart';
+import 'package:rh_mef/net/authentication_service.dart';
 import 'package:rh_mef/net/firebase.dart';
-import 'package:rh_mef/view/complaint.dart';
 import 'package:rh_mef/view/demande_dactes.dart';
 import 'package:rh_mef/view/detailsInformation.dart';
 import 'package:rh_mef/view/passwordreset.dart';
@@ -37,14 +40,23 @@ Future<dynamic> myBackgroundMessageHandler(Map<String, dynamic> message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // SharedPreferences prefs = await SharedPreferences.getInstance();
-  // if (prefs.getString('login') == null || prefs.getString('login') != '') {
-  //   runApp(LoginPage());
-  // } else {
-  //   // runApp(MyApp());
-  // }
-  await Firebase.initializeApp();
 
+  await Firebase.initializeApp();
+  // final Future<Database> database = openDatabase(
+  //   // Set the path to the database. Note: Using the `join` function from the
+  //   // `path` package is best practice to ensure the path is correctly
+  //   // constructed for each platform.
+  //   path.join(await getDatabasesPath(), 'drhmefmobile.db'),
+  //   onCreate: (db, version) {
+  //     // Run the CREATE TABLE statement on the database.
+  //     return db.execute(
+  //       "CREATE TABLE demandeacte (id INTEGER PRIMARY KEY, name TEXT, codemotif INTEGER)",
+  //     );
+  //   },
+  //   // Set the version. This executes the onCreate function and provides a
+  //   // path to perform database upgrades and downgrades.
+  //   version: 1,
+  // );
   //TODO: Background task initialization and setup
   // Workmanager.initialize(
   //     callbackDispatcher, // The top level function, aka callbackDispatcher
@@ -81,14 +93,36 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'DRH/MEF ONLINE',
-      theme: ThemeData(
-        primarySwatch: Colors.orange,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+    // return MaterialApp(
+    //   debugShowCheckedModeBanner: false,
+    //   title: 'DRH/MEF ONLINE',
+    //   theme: ThemeData(
+    //     primarySwatch: Colors.orange,
+    //     visualDensity: VisualDensity.adaptivePlatformDensity,
+    //   ),
+    //   home: AuthenticationWrapper(),
+    // );
+
+    return MultiProvider(
+      providers: [
+        Provider<AuthenticationService>(
+          create: (_) => AuthenticationService(FirebaseAuth.instance),
+        ),
+        StreamProvider(
+          create: (context) =>
+              context.read<AuthenticationService>().authStateChanges,
+          initialData: null,
+        ),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'DRH/MEF ONLINE',
+        theme: ThemeData(
+          primarySwatch: Colors.orange,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
+        home: LoginContent(),
       ),
-      home: LoginContent(),
     );
   }
 }
@@ -107,16 +141,6 @@ class _LoginContentState extends State<LoginContent> {
   TwilioFlutter twilioFlutter;
   FirebaseAuth auth = FirebaseAuth.instance;
   bool _obscurePassword;
-
-  getStatutsUser() async {
-    // SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    // final String userdata = sharedPreferences.getString('userdata');
-    if (auth.currentUser != null) {
-      print(auth.currentUser.uid);
-      return auth.currentUser.uid;
-    }
-    return null;
-  }
 
   @override
   void initState() {
@@ -138,10 +162,10 @@ class _LoginContentState extends State<LoginContent> {
     flutterLocalNotificationsPlugin.initialize(initilizationsSettings,
         onSelectNotification: notificationSelected);
 
-    // if (Platform.isAndroid) {
-    //   print('android platform');
-    //   firebaseCloudMessagingListeners();
-    // }
+    if (Platform.isAndroid) {
+      print('android platform');
+      firebaseCloudMessagingListeners();
+    }
     _firebaseMessaging.configure(
       onMessage: (Map<String, dynamic> message) async {
         print("onMessage: $message");
@@ -169,13 +193,13 @@ class _LoginContentState extends State<LoginContent> {
         actions: [
           CupertinoDialogAction(
             isDefaultAction: true,
-            child: Text('Ok'),
+            child: Text('Ouvrir'),
             onPressed: () async {
               Navigator.of(context, rootNavigator: true).pop();
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => MyApp(),
+                  builder: (context) => Demande_Actes(),
                 ),
               );
             },
@@ -192,20 +216,27 @@ class _LoginContentState extends State<LoginContent> {
     //     content: Text("Notification Clicked $payload"),
     //   ),
     // );
+    Navigator.of(context, rootNavigator: true).pop();
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Demande_Actes(),
+      ),
+    );
   }
 
   Future _showNotification(String title, String description) async {
     print(description);
+    int randomInt = Random().nextInt(100);
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-            'channelId', 'channelName', 'channelDescription',
+        AndroidNotificationDetails('12345', 'channelName', 'channelDescription',
             importance: Importance.max,
             priority: Priority.high,
             showWhen: false);
     const NotificationDetails platformChannelSpecifics =
         NotificationDetails(android: androidPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.show(
-        1, '$title', '$description', platformChannelSpecifics,
+        randomInt, '$title', '$description', platformChannelSpecifics,
         payload: 'item x');
   }
 
@@ -213,7 +244,7 @@ class _LoginContentState extends State<LoginContent> {
     _firebaseMessaging.configure(
       onBackgroundMessage: myBackgroundMessageHandler,
       onMessage: (Map<String, dynamic> message) async {
-        print("onMessage2: ${message}");
+        print("onMessage2: $message");
         await _showNotification(
             message['notification']['title'], message['notification']['body']);
       },
@@ -230,30 +261,37 @@ class _LoginContentState extends State<LoginContent> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: getStatutsUser(),
-        builder: (BuildContext context, snapshot) {
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-              return Center(
-                child: Center(child: CircularProgressIndicator()),
-              );
-            case ConnectionState.done:
-              print('connection state : ${snapshot.data}');
-              if (snapshot.data != null) {
-                return homelogin(context);
-              }
-              return loginuserview(context);
-              break;
-            case ConnectionState.none:
-              // TODO: Handle this case.
-              break;
-            case ConnectionState.active:
-              // TODO: Handle this case.
-              break;
-          }
-          return Text('');
-        });
+    final firebaseUser = context.watch<User>();
+    if (firebaseUser != null) {
+      return homelogin(context);
+    }
+    return loginuserview(context);
+
+    // return FutureBuilder(
+    //     future: getStatutsUser(),
+    //     builder: (BuildContext context, snapshot) {
+    //       switch (snapshot.connectionState) {
+    //         case ConnectionState.waiting:
+    //           return Center(
+    //             child: Center(child: CircularProgressIndicator()),
+    //           );
+    //         case ConnectionState.done:
+    //           print('connection state : ${snapshot.data}');
+    //           if (snapshot.data != null) {
+    //             return homelogin(context);
+    //             break;
+    //           }
+    //           return loginuserview(context);
+    //           break;
+    //         case ConnectionState.none:
+    //           // TODO: Handle this case.
+    //           break;
+    //         case ConnectionState.active:
+    //           // TODO: Handle this case.
+    //           break;
+    //       }
+    //       return Text('');
+    //     });
   }
 
   Widget loginuserview(BuildContext context) {
@@ -335,76 +373,33 @@ class _LoginContentState extends State<LoginContent> {
                       primary: Colors.white, backgroundColor: Colors.orange),
                   child: Text('Se Connecter'),
                   onPressed: () async {
-                    bool isInternet = await internetChecking();
-                    if (!isInternet) {
-                      errorDialog(
-                          context, 'Vous n\'avez de connection internet.');
-                    }
-                    // showLoaderDialog(context);
-                    String email = nameController.text.trim().toLowerCase();
+                    String email = nameController.text.toLowerCase().trim();
                     String password = passwordController.text;
                     // bool result = await getLoginAgent([matricule, password]);
+                    context
+                        .read<AuthenticationService>()
+                        .signIn(email: email, password: password);
                     bool result = await getLoginAgentFirebaseWay(
-                        email: email, password: password, context: context);
-                    if (result == false) {
-                      // Navigator.pop(context);
-                      // print(result);
-                      errorDialog(context,
-                          'Erreur d\'authentification Matricule ou mot de passe erroné.');
-                    } else {
-                      // Navigator.pop(context);
+                        email: email, password: password);
+                    Navigator.pushReplacement(context,
+                        MaterialPageRoute(builder: (context) => MyApp()));
+                    //
+                    // bool isInternet = await internetChecking();
+                    // if (!isInternet) {
+                    //   errorDialog(
+                    //       context, 'Vous n\'avez de connection internet.');
+                    // }
+                    // showLoaderDialog(context);
 
-                      //procedure pour changer le token, utiliser pour recevoir les notifications
-                      //dans toute les demande d'acte, avec celui de l'utilisateur actuelle
+                    // if (result == false) {
+                    //   // Navigator.pop(context);
+                    //   // print(result);
+                    //   errorDialog(context,
+                    //       'Erreur d\'authentification Matricule ou mot de passe erroné.');
+                    // }
 
-                      CollectionReference reference =
-                          FirebaseFirestore.instance.collection("ActeDemand");
-                      // DocumentReference actDemande = reference.doc(reference.parameters.);
-                      FirebaseMessaging().getToken().then((token) async {
-                        // await actDemande.update({"deviceId": token});
-                        print('the token of device: $token');
-                        print(
-                            'the currentUserId of device: ${auth.currentUser.uid}');
-                        QuerySnapshot data = await FirebaseFirestore.instance
-                            .collection("ActeDemand")
-                            .where('email', isEqualTo: email)
-                            .get();
-                        String value = data.docs.first.data()['key'];
-                        print(value);
-                        FirebaseFirestore.instance
-                            .collection("ActeDemand")
-                            .doc(value)
-                            .set(
-                          {'token': token, 'email': auth.currentUser.email},
-                          SetOptions(merge: true),
-                        );
-                      });
-                      FirebaseFirestore.instance
-                          .collection('Profile')
-                          .doc(auth.currentUser.uid)
-                          .snapshots()
-                          .forEach((element) {
-                        print(element.data());
-                        setState(() async {
-                          SharedPreferences sharedPreferences =
-                              await SharedPreferences.getInstance();
-                          sharedPreferences.setString(
-                              'matricule', element.data()['matricule']);
-                          sharedPreferences.setString(
-                              'nom', element.data()['nom']);
-                          sharedPreferences.setString(
-                              'tel', element.data()['tel']);
-                          sharedPreferences.setString(
-                              'email', element.data()['email']);
-                          sharedPreferences.setString('priseDeService',
-                              element.data()['priseDeService']);
-                          sharedPreferences.setString(
-                              'fonction', element.data()['fonction']);
-                        });
-                      });
-                      Navigator.pushReplacement(context,
-                          MaterialPageRoute(builder: (context) => MyApp()));
-                    }
+                    // Navigator.pushReplacement(context,
+                    //     MaterialPageRoute(builder: (context) => LoginSucces()));
                   },
                 ),
               ),
@@ -449,12 +444,12 @@ class _LoginContentState extends State<LoginContent> {
                               color: Colors.orange,
                             ),
                           ),
-                          Expanded(
-                            child: Center(
-                              child: Text(
-                                  'Bienvenu, ${auth.currentUser.displayName}'),
-                            ),
-                          ),
+                          // Expanded(
+                          //   child: Center(
+                          //     child: Text(
+                          //         'Bienvenu, ${auth.currentUser.displayName}'),
+                          //   ),
+                          // ),
                           Divider(
                             thickness: 3,
                           ),
@@ -599,15 +594,19 @@ class _LoginContentState extends State<LoginContent> {
                             await SharedPreferences.getInstance();
                         print('logout button clicked');
                         sharedPreferences.clear();
+                        context.read<AuthenticationService>().signOut();
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => MyApp()),
                         );
                       },
                       child: TextButton(
-                        onPressed: () {
-                          auth.signOut();
-                          Navigator.push(
+                        onPressed: () async {
+                          SharedPreferences shared =
+                              await SharedPreferences.getInstance();
+                          shared.clear();
+                          await auth.signOut();
+                          Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(builder: (context) => MyApp()),
                           );
@@ -651,319 +650,10 @@ class _LoginContentState extends State<LoginContent> {
       ),
     );
     showDialog(
-      barrierDismissible: false,
+      barrierDismissible: true,
       context: context,
       builder: (BuildContext context) {
         return alert;
-      },
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-  final String title;
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
-  final GlobalKey<ScaffoldState> _drawerKey = GlobalKey();
-  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
-  TwilioFlutter twilioFlutter;
-
-  @override
-  void initState() {
-    // WidgetsBinding.instance.addPostFrameCallback(_openDrawer);
-
-    twilioFlutter = TwilioFlutter(
-        accountSid: 'AC4cb8ad07e86ad04b7cd18a2737796b3d',
-        authToken: '9c1202163f062c18f0b29a2e3a4a7e30',
-        twilioNumber: '+14103767481');
-    super.initState();
-
-    var androidInitilize =
-        new AndroidInitializationSettings('@mipmap/ic_launcher');
-    var iOSinitilize = IOSInitializationSettings(
-        onDidReceiveLocalNotification: onDidReceiveLocalNotification);
-    var initilizationsSettings = new InitializationSettings(
-        android: androidInitilize, iOS: iOSinitilize);
-    flutterLocalNotificationsPlugin = new FlutterLocalNotificationsPlugin();
-    flutterLocalNotificationsPlugin.initialize(initilizationsSettings,
-        onSelectNotification: notificationSelected);
-
-    // if (Platform.isAndroid) {
-    //   print('android platform');
-    //   firebaseCloudMessagingListeners();
-    // }
-
-    // _firebaseMessaging.configure(
-    //   onMessage: (Map<String, dynamic> message) async {
-    //     print("onMessage: $message");
-    //   },
-    //   onBackgroundMessage: myBackgroundMessageHandler,
-    //   onLaunch: (Map<String, dynamic> message) async {
-    //     print("onLaunch: $message");
-    //   },
-    //   onResume: (Map<String, dynamic> message) async {
-    //     print("onResume: $message");
-    //   },
-    // );
-  }
-
-  Future onDidReceiveLocalNotification(
-      int id, String title, String body, String payload) async {
-    // display a dialog with the notification details, tap ok to go to another page
-    showDialog(
-      context: context,
-      builder: (BuildContext context) => CupertinoAlertDialog(
-        title: Text(title),
-        content: Text(body),
-        actions: [
-          CupertinoDialogAction(
-            isDefaultAction: true,
-            child: Text('Ok'),
-            onPressed: () async {
-              Navigator.of(context, rootNavigator: true).pop();
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => MyApp(),
-                ),
-              );
-            },
-          )
-        ],
-      ),
-    );
-  }
-
-  Future notificationSelected(String payload) async {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        content: Text("Notification Clicked $payload"),
-      ),
-    );
-  }
-
-  Future _showNotification(String title, String description) async {
-    print(description);
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-            'channelId', 'channelName', 'channelDescription',
-            importance: Importance.max,
-            priority: Priority.high,
-            showWhen: false);
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
-    await flutterLocalNotificationsPlugin.show(
-        1, '$title', '$description', platformChannelSpecifics,
-        payload: 'item x');
-  }
-
-  void firebaseCloudMessagingListeners() {
-    _firebaseMessaging.configure(
-      onBackgroundMessage: myBackgroundMessageHandler,
-      onMessage: (Map<String, dynamic> message) async {
-        String title = message['notification']['title'];
-        print("onMessage: $message");
-        await _showNotification(message['notification']['title'],
-            message['notification']['description']);
-      },
-      onLaunch: (Map<String, dynamic> message) async {
-        print("onLaunch: $message");
-        await _showNotification('onResume', 'efg');
-      },
-      onResume: (Map<String, dynamic> message) async {
-        print("onResume: $message");
-        await _showNotification('onLaunch', message['data']);
-      },
-    );
-  }
-
-  @override
-  void didUpdateWidget(covariant MyHomePage oldWidget) {
-    // TODO: implement didUpdateWidget
-    super.didUpdateWidget(oldWidget);
-  }
-
-  @override
-  void dispose() {
-    // TODO: implement dispose
-    super.dispose();
-  }
-  // void _onItemTapped(int index) {
-  //   setState(() {
-  //     _selectedIndex = index;
-  //   });
-  // }
-
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    return FutureBuilder(
-      future: Firebase.initializeApp(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          return Scaffold(
-            appBar: AppBar(
-              // Here we take the value from the MyHomePage object that was created by
-              // the App.build method, and use it to set our appbar title.
-              title: const Text('DRH MEF ONLINE'),
-              centerTitle: true,
-            ),
-            body: DetailsInformations(),
-            drawer: Drawer(
-              key: _drawerKey,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.orangeAccent,
-                ),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: ListView(
-                        padding: EdgeInsets.zero,
-                        children: [
-                          DrawerHeader(
-                            child: Text(''),
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                  image: AssetImage("assets/images/logo.png"),
-                                  fit: BoxFit.fill),
-                              color: Colors.orange,
-                            ),
-                          ),
-                          ListTile(
-                            title: Text(Constants.accueil),
-                            leading: Icon(Icons.home),
-                            onTap: () {
-                              // Update the state of the app
-                              // ...
-                              // Then close the drawer
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //       builder: (context) => DetailsInformations()),
-                              // );
-
-                              Navigator.pop(context);
-                            },
-                          ),
-                          Divider(
-                            thickness: 2,
-                          ),
-                          ListTile(
-                            title: Text(Constants.suggestion),
-                            leading: Icon(Icons.message),
-                            onTap: () {
-                              // Update the state of the app
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => Complaint()),
-                              );
-                              // Then close the drawer
-                              // Navigator.pop(context);
-                            },
-                          ),
-                          Divider(
-                            thickness: 2,
-                          ),
-                          ListTile(
-                            title: Text(Constants.dmd_act),
-                            leading: Icon(Icons.insert_drive_file),
-                            onTap: () {
-                              // Update the state of the app
-                              // ...
-                              // Then close the drawer
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => Demande_Actes()),
-                              );
-                              // Navigator.pop(context);
-                            },
-                          ),
-                          Divider(
-                            thickness: 2,
-                          ),
-                          ListTile(
-                            title: Text(Constants.retraite),
-                            leading: Icon(Icons.assistant),
-                            onTap: () {
-                              // Update the state of the app
-                              // ...
-                              // Then close the drawer
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => RetraiteProccedure()),
-                              );
-                              // Navigator.pop(context);
-                            },
-                          ),
-                          Divider(
-                            thickness: 2,
-                          ),
-                          ListTile(
-                            title: Text(Constants.infos),
-                            leading: Icon(Icons.info),
-                            onTap: () {
-                              // Update the state of the app
-                              // ...
-                              // Then close the drawer
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //       builder: (context) => StatutsDemande()),
-                              // );
-                              // sendSms();
-                              // _showNotification('abc', 'efg');
-                            },
-                          ),
-                          Divider(
-                            thickness: 2,
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                        padding: EdgeInsets.only(bottom: 30),
-                        child: TextButton(
-                          style: ButtonStyle(
-                            backgroundColor:
-                                MaterialStateProperty.all<Color>(Colors.red),
-                          ),
-                          onPressed: () {
-                            print('logout button clicked');
-                          },
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.highlight_off,
-                                color: Colors.white,
-                              ),
-                              Expanded(
-                                child: Text(
-                                  "Deconnecter",
-                                  style: TextStyle(color: Colors.white),
-                                  textAlign: TextAlign.center,
-                                ),
-                              )
-                            ],
-                          ),
-                        ))
-                  ],
-                ),
-              ),
-            ),
-          );
-        }
-        return CircularProgressIndicator();
       },
     );
   }

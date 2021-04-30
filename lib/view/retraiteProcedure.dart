@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:commons/commons.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:rh_mef/main.dart';
+import 'package:rh_mef/constantes.dart';
 import 'package:rh_mef/net/firebase.dart';
 import 'package:rh_mef/view/retraite/documentfoncpu.dart';
 
@@ -17,7 +18,9 @@ class _RetraiteProccedureState extends State<RetraiteProccedure> {
   // static var view = '${viewValue.home}';
   static var view = viewValue.home;
   FirebaseAuth auth = FirebaseAuth.instance;
-
+  String errorMsgFP = '';
+  String errorMsgCGRAE = '';
+  String value = "";
   List<String> listDocumentsFP = [
     "L'Extrait de naissance de l'interesse(e) (Original)",
     "Photocopie de la CNI de l'interessé(e)",
@@ -41,14 +44,25 @@ class _RetraiteProccedureState extends State<RetraiteProccedure> {
     "Une photocopie du certificat de premiere prise de service ou de la decision d'engagement (pour civils)",
     "Tous les actes de l'avancement, de nomination ou de promotion (pour les civils)"
   ];
+
+  Future<DocumentSnapshot> geterrorMsgFP() async {
+    DocumentSnapshot documentSnapshot = await FirebaseFirestore.instance
+        .collection('Documents')
+        .doc(auth.currentUser.uid)
+        .get();
+    return documentSnapshot;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
-            Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (context) => MyApp()));
+            // Navigator.pushReplacement(
+            //     context, MaterialPageRoute(builder: (context) => MyApp()));
+
+            Navigator.pop(context);
           },
           icon: Icon(Icons.arrow_back),
         ),
@@ -60,182 +74,198 @@ class _RetraiteProccedureState extends State<RetraiteProccedure> {
       body: Card(
         elevation: 2,
         margin: EdgeInsets.all(10),
-        child: StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection("Retreate")
-                .doc('${auth.currentUser.uid}')
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-              if (snapshot.data == null ||
-                  snapshot == null ||
-                  snapshot.data.data() == null) {
-                return Center(
-                  child: Container(),
-                );
-              }
-              if (snapshot.hasData) {
-                print('we do have data');
-                //checking for colors
-                // if (snapshot.data.data()['steps'] != null) {
-                final int value = snapshot.data.data()['steps'];
-                List<MaterialColor> listColors = colorForRetreateList(value);
-                return Column(
-                  children: [
-                    Container(
-                      child: Expanded(
-                        child: Column(
-                          children: [
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: TextButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                DocumentSelected(
-                                                  listDocuments:
-                                                      listDocumentsFP,
-                                                  title: 'fonctionPublique',
-                                                )));
-                                  },
-                                  style: TextButton.styleFrom(
-                                    primary: Colors.white,
-                                    backgroundColor: Colors.orange,
-                                  ),
-                                  child: Text(
-                                    "Cliquez pour voir la liste des documents fournis pour la premiere etape",
-                                    textAlign: TextAlign.center,
+        child:
+            // FutureBuilder<DocumentSnapshot>(
+            //     future: geterrorMsgFP(),
+            //     builder: (context, snapshot) {
+            //       if (snapshot == null ||
+            //           snapshot.data == null ||
+            //           snapshot.data.data() == null) {
+            //         return Center(
+            //           child: CircularProgressIndicator(),
+            //         );
+            //       }
+            //       // String data = snapshot.data.data()['docs'];
+            //       final List<dynamic> listdinamic = snapshot.data.data()['docs'];
+            //       final List<String> listDatas = listdinamic.cast<String>();
+            //
+            //       listDatas.forEach((element) {
+            //         if (element.contains('404')) {
+            //           List<String> listErrors = element.split(':');
+            //           // errorMsgFP = listErrors[1];
+            //         }
+            //       });
+            StreamBuilder<DocumentSnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection("Retreate")
+                    .doc('${auth.currentUser.uid}')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  // geterrorMsgFP();
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+                  if (snapshot.data == null ||
+                      snapshot == null ||
+                      snapshot.data.data() == null) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Card(
+                          child: ListTile(
+                            title: Text(
+                              'AUCUNE PROCCEDURE DE RETRAITE N\'A ETE ENTAMMEE',
+                              style: TextStyle(
+                                  fontStyle: FontStyle.normal, fontSize: 25),
+                              textAlign: TextAlign.center,
+                            ),
+                            // subtitle: Text(
+                            //     "Veuillez contacter le service social de la DRH/MEF pour entammer une proccedure de retraire"),
+                          ),
+                        ),
+                      ),
+                    );
+                  } else if (snapshot.hasData) {
+                    //checking for colors
+                    List<MaterialColor> listColors = [];
+                    // if (snapshot.data.data()['steps'] != null) {
+                    final List<dynamic> listStepsR =
+                        snapshot.data.data()['listSteps'];
+                    List<String> listStepsSR = listStepsR.cast<String>();
+                    List<StepRetreatProcess> listStepRetreat =
+                        Constants.listStepsRetreate;
+
+                    listStepsSR.forEach((element) {
+                      int index = listStepsSR.indexOf(element);
+                      if (element.toString().contains('404')) {
+                        List<String> templist = element.split(',');
+                        value = templist[0];
+                        errorMsgFP = templist[1];
+                        listStepRetreat[index].description = templist[1];
+                        listColors.add(
+                            colorForRetreateList(element.split(',').first));
+                      } else {
+                        listColors.add(colorForRetreateList(element));
+                      }
+                      listStepRetreat[1].updated =
+                          new DateFormat('EEE, MMM d, ' 'yy')
+                              .format(snapshot.data.data()['updated'].toDate());
+                      // listColors.add(colorForRetreateList(element));
+                    });
+
+                    return Container(
+                      padding: EdgeInsets.only(top: 30, left: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: ListView.builder(
+                                itemCount: Constants.listStepsRetreate.length,
+                                itemBuilder: (context, index) {
+                                  // if (index ==
+                                  //     Constants.listStepsRetreate.length)
+                                  //   return timelineLastRow(
+                                  //       Constants
+                                  //           .listStepsRetreate[index].title,
+                                  //       Constants.listStepsRetreate[index]
+                                  //           .description,
+                                  //       listColors[index],
+                                  //       listColors[index]);
+                                  return timelineRow(
+                                      title: Constants
+                                          .listStepsRetreate[index].title,
+                                      subTile:
+                                          listStepRetreat[index].description,
+                                      colors: listColors[index],
+                                      textColors: listColors[index],
+                                      updated: listStepRetreat[index].updated);
+                                  // Divider(
+                                }),
+                          ),
+                          Divider(
+                            height: 3,
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  height: 70,
+                                  child: Column(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: TextButton(
+                                          onPressed: () {
+                                            Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        DocumentSelected(
+                                                          listDocuments: Constants
+                                                              .documentSubmit,
+                                                          title:
+                                                              'Liste des documents a fournir.',
+                                                        )));
+                                          },
+                                          style: TextButton.styleFrom(
+                                            primary: Colors.white,
+                                            backgroundColor: Colors.orange,
+                                          ),
+                                          child: Text(
+                                            "Cliquez pour voir la liste des documents à fournir",
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ),
+
+                                      // timelineRow(
+                                      //     "Constitution des documents a la DRH/MEF",
+                                      //     "Veuillez soumettre es documents, nécessaire pour la constitution de votre dossier\nCliquez ici",
+                                      //     listColors[0],
+                                      //     listColors[0]),
+                                    ],
                                   ),
                                 ),
                               ),
-                            ),
-
-                            // timelineRow(
-                            //     "Constitution des documents a la DRH/MEF",
-                            //     "Veuillez soumettre es documents, nécessaire pour la constitution de votre dossier\nCliquez ici",
-                            //     listColors[0],
-                            //     listColors[0]),
-                          ],
-                        ),
+                            ],
+                          ),
+                        ],
                       ),
-                    ),
-                    Divider(
-                      height: 3,
-                    ),
-                    Container(
-                      child: timelineRow(
-                          "Votre document a ete transmis a la Fonction Publique",
-                          "Vos documents, sont en traitement au bureau de la fonction publique",
-                          listColors[1],
-                          listColors[1]),
-                    ),
-                    Container(
-                      child: dotlineTimeline(
-                        "Document de radiation établie",
-                        " ",
-                        listColors[2],
-                        listColors[2],
-                      ),
-                    ),
-                    Divider(
-                      height: 3,
-                    ),
-                    Container(
-                      child: Expanded(
-                        child: Column(
-                          children: [
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: TextButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                DocumentSelected(
-                                                  listDocuments:
-                                                      listDocumentsFP,
-                                                  title: 'cgrae',
-                                                )));
-                                  },
-                                  style: TextButton.styleFrom(
-                                    primary: Colors.white,
-                                    backgroundColor: Colors.orange,
-                                  ),
-                                  child: Text(
-                                    "Cliquez pour voir la liste des documents fournis pour la Deuxieme etape",
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            // timelineRow(
-                            //     "Constitution des documents a la DRH/MEF",
-                            //     "Veuillez soumettre es documents, nécessaire pour la constitution de votre dossier\nCliquez ici",
-                            //     listColors[0],
-                            //     listColors[0]),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Container(
-                      child: dotlineTimeline(
-                          "Document pour de la CGRAE constitué",
-                          "",
-                          listColors[4],
-                          listColors[4]),
-                    ),
-                    Container(
-                      child: timelineRow(
-                        "Votre document a ete transmis a la CGRAE",
-                        "Vos documents, sont en traitement au bureau de la CGRAE",
-                        listColors[5],
-                        listColors[5],
-                      ),
-                      // ignore: missing_return
-                    ),
-                    Container(
-                      child: timelineLastRow(
-                        "Proccedure terminée",
-                        "",
-                        listColors[6],
-                        listColors[6],
-                      ),
-                    ),
-                  ],
-                );
-                // }
-                // print(snapshot.data.data());
-                // print('Snapshot seems to be null');
-                // //snapshot.data is null
-                // return Center(
-                //   child: Card(),
-                // );
-              } else {
-                return Center(
-                  child: Text('No Data'),
-                );
-              }
-            }),
+                    );
+                    // }
+                    // print(snapshot.data.data());
+                    // print('Snapshot seems to be null');
+                    // //snapshot.data is null
+                    // return Center(
+                    //   child: Card(),
+                    // );
+                  } else {
+                    return Center(
+                      child: Text('No Data'),
+                    );
+                  }
+                }),
+        // }),
       ),
     );
+    // );
   }
 
   Widget documentFP(String title, List<String> listDocuments) {
     return Container();
   }
 
-  Widget timelineRow(String title, String subTile, MaterialColor colors,
-      MaterialColor textColors) {
+  Widget timelineRow(
+      {String title,
+      String subTile,
+      MaterialColor colors,
+      MaterialColor textColors,
+      String updated}) {
+    if (colors == Colors.grey || updated == null || updated == 'null') {
+      updated = "";
+    }
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: <Widget>[
@@ -247,8 +277,8 @@ class _RetraiteProccedureState extends State<RetraiteProccedure> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               Container(
-                width: 18,
-                height: 18,
+                width: 25,
+                height: 25,
                 decoration: new BoxDecoration(
                   color: colors,
                   shape: BoxShape.circle,
@@ -257,7 +287,7 @@ class _RetraiteProccedureState extends State<RetraiteProccedure> {
               ),
               Container(
                 width: 3,
-                height: 70,
+                height: 110,
                 decoration: new BoxDecoration(
                   color: colors,
                   shape: BoxShape.rectangle,
@@ -284,8 +314,9 @@ class _RetraiteProccedureState extends State<RetraiteProccedure> {
                   textAlign: TextAlign.center,
                 ),
                 subtitle: Text(
-                  subTile,
-                  style: TextStyle(color: colors),
+                  "$subTile \n $updated",
+                  style: TextStyle(color: Colors.black, fontSize: 14),
+                  textAlign: TextAlign.center,
                 ),
               ),
             ],

@@ -2,21 +2,28 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:rh_mef/models/stepsActe.dart';
 
 class ActeModel {
-  String key;
-  int acteCode;
-  String acteName;
-  int acteMotif;
-  List<ListSteps> steps;
+  final String key;
+  final int acteCode;
+  final String acteName;
+  final int acteMotif;
+  final List<ListSteps> steps;
+  final List<ListSteps> stepsError;
 
-  ActeModel(
-      {this.key, this.acteCode, this.acteName, this.acteMotif, this.steps});
+  const ActeModel(
+      {this.key,
+      this.acteCode,
+      this.acteName,
+      this.acteMotif,
+      this.steps,
+      this.stepsError});
 
   ActeModel.fromSnapshot(DataSnapshot snapshot)
       : key = snapshot.key,
         acteCode = snapshot.value['acteCode'],
         acteName = snapshot.value['acteName'],
         acteMotif = snapshot.value['acteMotif'],
-        steps = snapshot.value['steps'];
+        steps = snapshot.value['steps'],
+        stepsError = snapshot.value['stepsError'];
 
   toJson() {
     return {
@@ -24,12 +31,13 @@ class ActeModel {
       "acteCode": acteCode,
       "acteName": acteName,
       "acteMotif": acteMotif,
-      "steps": steps
+      "steps": steps,
+      "stepsError": stepsError
     };
   }
 
   @override
   String toString() {
-    return 'ActeModel{key: $key, acteCode: $acteCode, acteName: $acteName, acteMotif: $acteMotif, steps: $steps}';
+    return 'ActeModel{key: $key, acteCode: $acteCode, acteName: $acteName, acteMotif: $acteMotif, steps: $steps, stepsError : $stepsError}';
   }
 }

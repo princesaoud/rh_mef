@@ -2,13 +2,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:rh_mef/view/retraiteProcedure.dart';
 
+import '../../constantes.dart';
+
+// ignore: must_be_immutable
 class DocumentSelected extends StatelessWidget {
-  final List<String> listDocuments;
+  final List<SubmitModel> listDocuments;
   final String title;
+
   DocumentSelected({this.listDocuments, this.title});
+
   final FirebaseAuth auth = FirebaseAuth.instance;
+  String errorMessage = "";
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -16,38 +22,51 @@ class DocumentSelected extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
-            Navigator.pushReplacement(context,
-                MaterialPageRoute(builder: (context) => RetraiteProccedure()));
+            // Navigator.pushReplacement(context,
+            //     MaterialPageRoute(builder: (context) => RetraiteProccedure()));
+            Navigator.pop(context);
           },
           icon: Icon(Icons.close_rounded),
         ),
         title: Text(
-          'Pieces a fournir pour la $title',
+          '$title',
           softWrap: true,
           style: TextStyle(fontSize: 15),
           textAlign: TextAlign.center,
         ),
       ),
-      body: FutureBuilder<DocumentSnapshot>(
-          future: FirebaseFirestore.instance
+      body: StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
               .collection("Documents")
               .doc(auth.currentUser.uid)
-              .get(),
+              .snapshots(includeMetadataChanges: true),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(
                 child: CircularProgressIndicator(),
               );
             }
-            print(snapshot.data.data()['$title']);
-            var splitData =
-                snapshot.data.data()['$title'].toString().split(',');
+            List<dynamic> receivedData = snapshot.data.data()['docs'];
+            List<String> splitData = receivedData.cast<String>();
+            print('about to split');
+            print(snapshot.data.data());
             List<MaterialColor> listColors = [];
+            List<String> listErrorMessage = [];
+
             splitData.forEach((element) {
-              if (element == "1") {
+              print(element);
+              if (element == "10") {
                 listColors.add(Colors.green);
-              } else {
+                listErrorMessage.add("");
+              } else if (element == "0") {
+                listErrorMessage.add("");
+
                 listColors.add(Colors.grey);
+              } else if (element.contains('404')) {
+                List<String> tempList = element.split(':');
+                errorMessage = tempList[1];
+                listErrorMessage.add(tempList[1]);
+                listColors.add(Colors.red);
               }
             });
             return Card(
@@ -67,10 +86,15 @@ class DocumentSelected extends StatelessWidget {
                             Expanded(
                               child: ListTile(
                                 title: Text(
-                                  '${listDocuments[index]}',
+                                  '${listDocuments[index].descSubmitDoc}',
                                   style: TextStyle(
                                       fontSize: 20, color: listColors[index]),
                                   textAlign: TextAlign.center,
+                                ),
+                                subtitle: Text(
+                                  listErrorMessage[index],
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                                 leading: Icon(
                                   Icons.check_box,

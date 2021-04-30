@@ -447,12 +447,12 @@ class _DetailsInformationsState extends State<DetailsInformations> {
 
   Widget myScrolableNewsDetails() {
     return Scrollbar(
-      child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
+      child: FutureBuilder<QuerySnapshot>(
+          future: FirebaseFirestore.instance
               .collection('News')
               .orderBy('DatePosted', descending: true)
               .limit(10)
-              .snapshots(),
+              .get(),
           builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
             if (snapshot.hasError) {
               print("Something went wrong");

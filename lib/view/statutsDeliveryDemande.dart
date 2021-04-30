@@ -2,14 +2,16 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:commons/commons.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:rh_mef/models/stepsActe.dart';
 
-// ignore: must_be_immutable
 class StatutsDemande extends StatefulWidget {
-  List<ListSteps> listSteps = [];
-  StatutsDemande(this.listSteps);
+  final List<ListSteps> listSteps;
+  final List<ListSteps> listStepsError;
+  final int numeroActe;
+  StatutsDemande({this.listSteps, this.listStepsError, this.numeroActe});
   @override
   _StatutsDemandeState createState() => _StatutsDemandeState();
 }
@@ -29,7 +31,9 @@ class _StatutsDemandeState extends State<StatutsDemande> {
     Colors.grey
   ];
   DocumentSnapshot documentSnapshot;
-
+  String errorMessage = '';
+  String errorTitle = '';
+  FirebaseAuth auth = FirebaseAuth.instance;
   @override
   Widget build(BuildContext context) {
     getNumeroDemande();
@@ -53,8 +57,16 @@ class _StatutsDemandeState extends State<StatutsDemande> {
         ),
         body: presenceSoldeTimeLine(),
       );
+    } else if (widget.listSteps.length == 0) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text("Pas normal"),
+          backgroundColor: Colors.orange,
+        ),
+        body: Card(),
+      );
     } else {
-      print("le nombre de listSteps ${widget.listSteps.length}");
+      // print("le nom ${widget.listSteps.length}");
       return Scaffold(
         appBar: AppBar(
           title: Text("Tracking de votre demande "),
@@ -67,17 +79,37 @@ class _StatutsDemandeState extends State<StatutsDemande> {
 
   getNumeroDemande() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    int value = sharedPreferences.getInt('numeroDemande');
+    // int value = sharedPreferences.getInt('numeroDemande');
+    int choiceCode;
+    String value = auth.currentUser.uid;
     QuerySnapshot queryResult = await FirebaseFirestore.instance
         .collection('ActeDemand')
-        .where('numeroDemande', isEqualTo: value)
+        .where('acteDemande', isEqualTo: widget.numeroActe)
         .get();
-    setState(() {
-      documentSnapshot = queryResult.docs.first;
-    });
-    int statutsCode = documentSnapshot.data()['statuts'];
+    // setState(() {
+    //documentSnapshot doc.fist was here
+    // });
+    documentSnapshot = queryResult.docs[0];
+    // setState(() {
+    //   documentSnapshot = queryResult.docs[0];
+    // });
+    var statutsCode = documentSnapshot.data()['statuts'];
+
     print('statutsCode: $statutsCode');
-    switch (statutsCode) {
+    print("variable type = ${statutsCode.runtimeType}");
+    if (statutsCode.runtimeType == String &&
+        statutsCode.toString().contains('404')) {
+      List<String> listCode = statutsCode.toString().split(',');
+      choiceCode = int.parse(listCode[0]);
+      print('its a string value $statutsCode');
+      errorMessage = listCode[1];
+    } else if (statutsCode.runtimeType == String) {
+      choiceCode = int.parse(statutsCode);
+    } else if (statutsCode.runtimeType == int) {
+      choiceCode = statutsCode;
+      print('choice code $choiceCode');
+    }
+    switch (choiceCode) {
       // case 0:
       //   // print('statuts value is 0');
       //   setState(() {
@@ -85,18 +117,18 @@ class _StatutsDemandeState extends State<StatutsDemande> {
       //   });
       //   break;
       case 1:
-        // print('statuts value is 1 ');
+        print('statuts value is $choiceCode');
         setState(() {
-          for (var i = 0; i < statutsCode; i++) {
+          for (var i = 0; i < choiceCode; i++) {
             statutsColor[i] = Colors.green;
-            textColor[i] = Colors.black;
+            textColor[i] = Colors.green;
           }
         });
         break;
       case 2:
         // print('Statuts value is 2');
         setState(() {
-          for (var i = 0; i < statutsCode; i++) {
+          for (var i = 0; i < choiceCode; i++) {
             statutsColor[i] = Colors.green;
             textColor[i] = Colors.green;
           }
@@ -106,7 +138,7 @@ class _StatutsDemandeState extends State<StatutsDemande> {
         // print('Statuts value is 3');
         setState(() {
           // print('in the for loop statuts code is : $statutsCode');
-          for (var i = 0; i < statutsCode; i++) {
+          for (var i = 0; i < choiceCode; i++) {
             statutsColor[i] = Colors.green;
             textColor[i] = Colors.green;
           }
@@ -115,10 +147,33 @@ class _StatutsDemandeState extends State<StatutsDemande> {
       case 4:
         // print('Statuts value is 3');
         setState(() {
-          for (var i = 0; i < statutsCode; i++) {
+          for (var i = 0; i < choiceCode; i++) {
             statutsColor[i] = Colors.green;
             textColor[i] = Colors.green;
           }
+        });
+        break;
+      case 20:
+        // print('Statuts value is 3');
+        setState(() {
+          for (var i = 0; i < 4; i++) {
+            statutsColor[i] = Colors.green;
+            textColor[i] = Colors.green;
+          }
+        });
+        break;
+
+      case 404:
+        //L'erreur apparait a la deuxieme etape seulement
+        setState(() {
+          // for (var i = 0; i < 2; i++) {
+          //   statutsColor[i] = Colors.red;
+          //   textColor[i] = Colors.red;
+          // }
+          statutsColor[1] = Colors.red;
+          textColor[1] = Colors.red;
+          statutsColor[0] = Colors.green;
+          textColor[0] = Colors.green;
         });
         break;
       // case 5:
@@ -167,7 +222,7 @@ class _StatutsDemandeState extends State<StatutsDemande> {
                               child: Column(
                                 children: [
                                   Text(
-                                    'Demande Numero: ${documentSnapshot.data()['numeroDemande']}',
+                                    'Matricule Agent: ${documentSnapshot.data()['matricule']}',
                                     style: TextStyle(fontSize: 15),
                                     textAlign: TextAlign.center,
                                   ),
@@ -185,13 +240,20 @@ class _StatutsDemandeState extends State<StatutsDemande> {
                                 "${widget.listSteps[0].description}",
                                 statutsColor[0],
                                 textColor[0]),
-                            timelineRow(
-                                "${widget.listSteps[1].title}",
-                                '${widget.listSteps[1].description}',
-                                statutsColor[1],
-                                textColor[1]),
+                            if (errorMessage == '')
+                              timelineRow(
+                                  "${widget.listSteps[1].title}",
+                                  '${widget.listSteps[1].description}',
+                                  statutsColor[1],
+                                  textColor[1]),
+                            if (errorMessage != '')
+                              timelineRow(
+                                  "${widget.listStepsError[1].title}",
+                                  '$errorMessage',
+                                  statutsColor[1],
+                                  textColor[1]),
                             timelineLastRow(
-                                "${widget.listSteps.last.title}",
+                                "${widget.listStepsError.last.title}",
                                 "${widget.listSteps.last.description}",
                                 statutsColor[2],
                                 textColor[2]),
@@ -242,7 +304,7 @@ class _StatutsDemandeState extends State<StatutsDemande> {
                               child: Column(
                                 children: [
                                   Text(
-                                    'Demande Numero: ${documentSnapshot.data()['numeroDemande']}',
+                                    'Matricule Agent: ${documentSnapshot.data()['matricule']}',
                                     style: TextStyle(fontSize: 15),
                                     textAlign: TextAlign.center,
                                   ),
@@ -260,16 +322,28 @@ class _StatutsDemandeState extends State<StatutsDemande> {
                                 "${widget.listSteps[0].description}",
                                 statutsColor[0],
                                 textColor[0]),
-                            dotlineTimeline(
-                                "${widget.listSteps[1].title}",
-                                '${widget.listSteps[1].description}',
-                                statutsColor[1],
-                                textColor[1]),
+                            if (errorMessage == '')
+                              dotlineTimeline(
+                                  "${widget.listSteps[1].title}",
+                                  '${widget.listSteps[1].description}',
+                                  statutsColor[1],
+                                  textColor[1]),
+                            if (errorMessage != '')
+                              dotlineTimeline(
+                                  "${widget.listStepsError[1].title}",
+                                  'Erreur: ${errorMessage}',
+                                  statutsColor[1],
+                                  textColor[1]),
                             timelineRow(
                                 "${widget.listSteps[2].title}",
                                 "${widget.listSteps[2].description}",
                                 statutsColor[2],
                                 textColor[2]),
+                            // timelineRow(
+                            //     "${widget.listSteps[3].title}",
+                            //     "${widget.listSteps[3].description}",
+                            //     statutsColor[3],
+                            //     textColor[3]),
                             timelineLastRow(
                                 "${widget.listSteps.last.title}",
                                 "${widget.listSteps.last.description}",
@@ -338,7 +412,10 @@ class _StatutsDemandeState extends State<StatutsDemande> {
                     color: colors,
                   ),
                 ),
-                subtitle: Text(subTile),
+                subtitle: Text(
+                  subTile,
+                  style: TextStyle(color: colors),
+                ),
               ),
             ],
           ),
@@ -485,7 +562,10 @@ class _StatutsDemandeState extends State<StatutsDemande> {
                     color: textColors,
                   ),
                 ),
-                subtitle: Text(subTile),
+                subtitle: Text(
+                  subTile,
+                  style: TextStyle(color: colors, fontSize: 15),
+                ),
               ),
             ],
           ),

@@ -47,6 +47,9 @@ dependencies:
   twilio_flutter: ^0.0.5
   font_awesome_flutter: ^8.11.0
   firebase_auth:
+  sqflite:
+  path:
+  provider: ^5.0.0
 
 
 

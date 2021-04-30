@@ -11,9 +11,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:rh_mef/constantes.dart';
+import 'package:rh_mef/models/ActeModel.dart';
 import 'package:rh_mef/models/actualites_type.dart';
 import 'package:rh_mef/models/mDemandeActe.dart';
-import 'package:rh_mef/models/stepsActe.dart';
 import 'package:rh_mef/models/userDetails.dart';
 import 'package:twilio_flutter/twilio_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -72,7 +72,7 @@ Future<void> userSetup(String designation, String number, String email,
 Future<void> demandeActeSetup(DemandeActe _demandeacte) async {
   firebaseCloudMessaging_Listeners();
   var uuid = Uuid();
-  int numeroDemande = Random().nextInt(10000);
+  int acteDemande = Random().nextInt(10000);
   CollectionReference acteDemand =
       FirebaseFirestore.instance.collection('ActeDemand');
   // FirebaseAuth auth = FirebaseAuth.instance;
@@ -87,19 +87,18 @@ Future<void> demandeActeSetup(DemandeActe _demandeacte) async {
       'key': docId,
       'deviceId': token,
       'matricule': _demandeacte.matricule,
-      'nom': _demandeacte.nom,
-      'telephone': _demandeacte.telephone,
-      'email': _demandeacte.email,
-      'datePriseService': _demandeacte.datePriseService,
-      'emploi': _demandeacte.emploi,
+      // 'nom': _demandeacte.nom,
+      // 'telephone': _demandeacte.telephone,
+      // 'email': _demandeacte.email,
+      // 'datePriseService': _demandeacte.datePriseService,
+      // 'emploi': _demandeacte.emploi,
       'natureActe': _demandeacte.natureActe,
       'pieceJointe': _demandeacte.pieceJointe,
       'motif': _demandeacte.motif,
       'statuts': _demandeacte.statuts,
-      'numeroDemande': numeroDemande,
+      'acteDemande': acteDemande,
       'userId': auth.currentUser.uid,
-      'updated': DateTime.now(),
-      'isNotification': true,
+      'created': DateTime.now(),
     });
     // bool pushNotification = await callOnFcmApiSendPushNotifications(token);
   });
@@ -230,7 +229,7 @@ Future<bool> callOnFcmApiSendPushNotifications(
   }
 }
 
-Widget statusCode(int status, int numeroDemande, List<ListSteps> listSteps) {
+Widget statusCode(int status, String acteDemande) {
   String tempResult = "";
   switch (status) {
     case 0:
@@ -239,7 +238,7 @@ Widget statusCode(int status, int numeroDemande, List<ListSteps> listSteps) {
       return Card(
         child: ListTile(
           leading: Icon(Icons.pending_actions_rounded),
-          title: Text('Numero demande: $numeroDemande'),
+          title: Text('Acte: $acteDemande'),
           subtitle: Text(
             'Progression: $tempResult \n ',
           ),
@@ -252,7 +251,7 @@ Widget statusCode(int status, int numeroDemande, List<ListSteps> listSteps) {
       return Card(
         child: ListTile(
           leading: Icon(Icons.autorenew),
-          title: Text('Numero demande: $numeroDemande'),
+          title: Text('Acte: $acteDemande'),
           subtitle: Text(
             'Progression: $tempResult',
           ),
@@ -270,40 +269,58 @@ Widget statusCode(int status, int numeroDemande, List<ListSteps> listSteps) {
             Icons.autorenew_sharp,
             color: Colors.green,
           ),
-          title: Text('Numero demande: $numeroDemande'),
+          title: Text('Acte: $acteDemande'),
           subtitle: Text(
             'Progression: $tempResult',
           ),
         ),
       );
       break;
-    case 3:
+    case 20:
       // tempResult = "Votre demande a ete retire";
       // tempResult = "${listSteps[3]}";
-      tempResult = "Votre demande est disponible et peut etre retiré";
+      tempResult = "Votre demande a été retiré, avec succès";
 
       return Card(
         child: ListTile(
           leading: Icon(
-            Icons.download_done_sharp,
+            Icons.done_all,
             color: Colors.green,
           ),
-          title: Text('Numero demande: $numeroDemande'),
+          title: Text('Acte: $acteDemande'),
           subtitle: Text(
             'Progression: $tempResult',
           ),
         ),
       );
       break;
-    case 4:
-      tempResult = "Votre demande a ete rejette";
+
+    case 404:
+      tempResult = "Votre demande a rencontré une erreur";
       return Card(
         child: ListTile(
           leading: Icon(
             Icons.dangerous,
+            color: Colors.red,
+          ),
+          title: Text('Acte: $acteDemande'),
+          subtitle: Text(
+            'Progression: $tempResult',
+          ),
+        ),
+      );
+      break;
+
+    default:
+      tempResult = "Votre demande est validée et est cours de traitement";
+
+      return Card(
+        child: ListTile(
+          leading: Icon(
+            Icons.autorenew_sharp,
             color: Colors.green,
           ),
-          title: Text('Numero demande: $numeroDemande'),
+          title: Text('Acte : $acteDemande'),
           subtitle: Text(
             'Progression: $tempResult',
           ),
@@ -345,76 +362,86 @@ getLoginAgentFirebaseWay(
   try {
     UserCredential userCredential = await FirebaseAuth.instance
         .signInWithEmailAndPassword(email: "$email", password: "$password");
+    await FirebaseMessaging().getToken().then((token) async {
+      // await actDemande.update({"deviceId": token});
+      // print('the token of device: $token');
+      // print('the currentUserId of device: ${userCredential.user.uid}');
+      QuerySnapshot data = await FirebaseFirestore.instance
+          .collection("ActeDemand")
+          .where('email', isEqualTo: email)
+          .get();
+      String value = data.docs.first.data()['key'];
+      print(value);
+      var snapshot = FirebaseFirestore.instance
+          .collection("ActeDemand")
+          .doc(value)
+          .snapshots();
+      await snapshot.forEach((element) {
+        element.reference.update({'deviceId': token});
+      });
+
+      await FirebaseFirestore.instance
+          .collection("Profile")
+          .doc('${userCredential.user.uid}')
+          .update({'token': token});
+      DocumentSnapshot document = await FirebaseFirestore.instance
+          .collection('Profile')
+          .doc(userCredential.user.uid)
+          .get();
+      SharedPreferences sharedPreferences =
+          await SharedPreferences.getInstance();
+      sharedPreferences.setString('matricule', document.data()['matricule']);
+      sharedPreferences.setString('nom', document.data()['nom']);
+      sharedPreferences.setString('tel', document.data()['tel']);
+      sharedPreferences.setString('email', document.data()['email']);
+      sharedPreferences.setString(
+          'priseDeService', document.data()['priseDeService']);
+      sharedPreferences.setString('fonction', document.data()['fonction']);
+    });
+    return true;
   } on FirebaseAuthException catch (e) {
     if (e.code == 'user-not-found') {
       print('No user found for that email.');
       errorDialog(
           context, "Votre email ne correspond a aucun compte de nos membres");
+      return false;
     } else if (e.code == 'wrong-password') {
       print('Wrong password provided for that user.');
       errorDialog(context, "Mot de passe erroné");
+      return false;
     }
   }
 }
 
-List<MaterialColor> colorForRetreateList(int value) {
+MaterialColor colorForRetreateList(String value) {
   // for(var i = 0 ; i < value; i ++){
   //   return Icon(Icons.check_box);
   // }
-  List<MaterialColor> listColor = [
-    Colors.grey,
-    Colors.grey,
-    Colors.grey,
-    Colors.grey,
-    Colors.grey,
-    Colors.grey,
-    Colors.grey,
-  ];
+  // List<MaterialColor> listColor = [
+  //   Colors.grey,
+  //   Colors.grey,
+  //   Colors.grey,
+  //   Colors.grey,
+  //   Colors.grey,
+  //   Colors.grey,
+  //   Colors.grey,
+  // ];
+  print('$value');
   switch (value) {
-    case 0:
-      return listColor;
+    case '0':
+      return Colors.grey;
       break;
-    case 1:
-      listColor[0] = Colors.green;
-      return listColor;
-    case 2:
-      for (var i = 0; i < value; i++) {
-        listColor[i] = Colors.green;
-      }
-      return listColor;
-      break;
-    case 3:
-      for (var i = 0; i < value; i++) {
-        listColor[i] = Colors.green;
-      }
-      return listColor;
-      break;
-    case 4:
-      for (var i = 0; i < value; i++) {
-        listColor[i] = Colors.green;
-      }
-      return listColor;
-      break;
-    case 5:
-      for (var i = 0; i < value; i++) {
-        listColor[i] = Colors.green;
-      }
-      return listColor;
-      break;
-    case 6:
-      for (var i = 0; i < value; i++) {
-        listColor[i] = Colors.green;
-      }
-      return listColor;
-      break;
-    case 7:
-      for (var i = 0; i < value; i++) {
-        listColor[i] = Colors.green;
-      }
-      return listColor;
+    case '1':
+      // listColor[0] = Colors.green;
+      return Colors.green;
+    case '404':
+      // for (var i = 0; i < listColor.length; i++) {
+      //   listColor[i] = Colors.red;
+      // }
+      return Colors.red;
       break;
   }
-  return listColor;
+  return Colors.grey;
 }
 
 @override
@@ -462,4 +489,27 @@ Future<bool> getLoginAgent(List<String> arguments) async {
     }
     return false;
   }
+}
+
+getActeCode(String acteName) {
+  int value;
+  List<ActeModel> listModels = Constants.listsActes;
+  listModels.forEach((element) {
+    if (element.acteName.trim().compareTo(acteName.trim()) == 0) {
+      final int data = element.acteMotif;
+      value = data;
+    }
+  });
+  return value;
+}
+
+getStatutsCode(var value) {
+  int data;
+  if (value.runtimeType == int) {
+    data = value;
+  } else if (value.runtimeType == String) {
+    List<String> listValue = value.toString().trim().split(',');
+    data = int.parse(listValue[0]);
+  }
+  return data;
 }
