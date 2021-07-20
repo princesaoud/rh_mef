@@ -27,14 +27,14 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  firebase_core: ^0.5.3
+  firebase_core:
   cupertino_icons: ^1.0.0
   progress_state_button: ^1.0.2
-  firebase_messaging: ^6.0.16
-  firebase_database: ^4.4.0
-  cloud_firestore: ^0.14.1
+  firebase_messaging: ^8.0.0-dev.15
+  firebase_database:
+  cloud_firestore:
   commons: ^0.7.8+3
-  firebase_storage: ^5.2.0
+  firebase_storage:
   image_picker: ^0.6.7+4
   permission_handler: ^5.0.1+1
   shared_preferences: ^0.5.12+4
@@ -42,7 +42,6 @@ dependencies:
   flutter_local_notifications: ^3.0.2
   uuid: ^2.2.2
   http: ^0.12.2
-  workmanager: ^0.2.3
   timelines: ^0.0.2+1
   twilio_flutter: ^0.0.5
   font_awesome_flutter: ^8.11.0
@@ -50,6 +49,7 @@ dependencies:
   sqflite:
   path:
   provider: ^5.0.0
+  progress_dialog: ^1.2.4
 
 
 
@@ -74,6 +74,13 @@ flutter:
     - assets/images/embleme.png
     - assets/images/logo.png
     - assets/images/deonto.png
+    - assets/images/image.png
+    - assets/images/todo.png
+    - assets/images/note.png
+    - assets/images/calendar.png
+    - assets/images/settings.png
+    - assets/images/userImage.png
+    - assets/images/supportIcon.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

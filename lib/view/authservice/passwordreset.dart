@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:rh_mef/net/firebase.dart';
 
-import '../main.dart';
+import '../../main.dart';
 
 class PasswordReset extends StatelessWidget {
   @override
@@ -74,8 +74,12 @@ class _PasswordResetContentState extends State<PasswordResetContent> {
                       resetPassword(emailController.text.trim());
                       successDialog(context,
                           "E-Mail de reinitialisation envoyé avec succes");
-                      Navigator.pushReplacement(context,
-                          MaterialPageRoute(builder: (context) => MyApp()));
+                      // Navigator.pushReplacement(context,
+                      //     MaterialPageRoute(builder: (context) => MyApp()));
+                      Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => LoginContent()));
                     },
                     child: Text(
                       "Envoyer lien de reinitialisation",

@@ -15,7 +15,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
     <application
-        android:name="com.example.youssouf.rhMef.Application"
+        android:name=".Application"
         android:label="DRH MEF"
         android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher">

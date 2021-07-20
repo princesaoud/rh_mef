@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,76 +8,51 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
-import 'package:rh_mef/constantes.dart';
 import 'package:rh_mef/net/authentication_service.dart';
-import 'package:rh_mef/net/firebase.dart';
-import 'package:rh_mef/view/demande_dactes.dart';
-import 'package:rh_mef/view/detailsInformation.dart';
-import 'package:rh_mef/view/passwordreset.dart';
-import 'package:rh_mef/view/profiledetails.dart';
-import 'package:rh_mef/view/registrationScreen.dart';
-import 'package:rh_mef/view/retraiteProcedure.dart';
+import 'package:rh_mef/view/authservice/agent/agentlogin.dart';
+import 'package:rh_mef/view/authservice/passwordreset.dart';
+import 'package:rh_mef/view/authservice/public/publiclogin.dart';
+import 'package:rh_mef/view/authservice/registrationScreen.dart';
 import 'package:twilio_flutter/twilio_flutter.dart';
 
-Future<dynamic> myBackgroundMessageHandler(Map<String, dynamic> message) async {
-  if (message.containsKey('data')) {
-    // Handle data message
-    final dynamic data = message['data'];
+// Future<dynamic> myBackgroundMessageHandler(Map<String, dynamic> message) async {
+//   if (message.containsKey('data')) {
+//     // Handle data message
+//     final dynamic data = message['data'];
+//
+//     print('mybackgroundHandler $data');
+//   }
+//
+//   if (message.containsKey('notification')) {
+//     // Handle notification message
+//     final dynamic notification = message['notification'];
+//     print('mybackgroundHandler $notification');
+//   }
+//
+//   // Or do other work.
+// }
 
-    print('mybackgroundHandler $data');
-  }
-
-  if (message.containsKey('notification')) {
-    // Handle notification message
-    final dynamic notification = message['notification'];
-    print('mybackgroundHandler $notification');
-  }
-
-  // Or do other work.
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print("onBackgroundMessage: $message");
 }
+
+/// Global variables
+/// * [GlobalKey<NavigatorState>]
+// class GlobalVariable {
+//   /// This global key is used in material app for navigation through firebase notifications.
+//   /// [navState] usage can be found in [notification_notifier.dart] file.
+//   static final GlobalKey<NavigatorState> navState = GlobalKey<NavigatorState>();
+// }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await Firebase.initializeApp();
-  // final Future<Database> database = openDatabase(
-  //   // Set the path to the database. Note: Using the `join` function from the
-  //   // `path` package is best practice to ensure the path is correctly
-  //   // constructed for each platform.
-  //   path.join(await getDatabasesPath(), 'drhmefmobile.db'),
-  //   onCreate: (db, version) {
-  //     // Run the CREATE TABLE statement on the database.
-  //     return db.execute(
-  //       "CREATE TABLE demandeacte (id INTEGER PRIMARY KEY, name TEXT, codemotif INTEGER)",
-  //     );
-  //   },
-  //   // Set the version. This executes the onCreate function and provides a
-  //   // path to perform database upgrades and downgrades.
-  //   version: 1,
-  // );
-  //TODO: Background task initialization and setup
-  // Workmanager.initialize(
-  //     callbackDispatcher, // The top level function, aka callbackDispatcher
-  //     isInDebugMode:
-  //         true // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
-  //     );
-  // Workmanager.registerPeriodicTask(
-  //   "2",
-  //   "simplePeriodicTask",
-  //   // When no frequency is provided the default 15 minutes is set.
-  //   // Minimum frequency is 15 min. Android will automatically change your frequency to 15 min if you have configured a lower frequency.
-  //   frequency: Duration(seconds: 5),
-  // );
+  // ignore: invalid_use_of_visible_for_testing_member
   SharedPreferences.setMockInitialValues({});
-  // FirebaseMessaging().getToken().then((token) async {
-  //   await FirebaseFirestore.instance
-  //       .collection("tokens")
-  //       .doc(token)
-  //       .set({'token': token});
-  // });
-
-  runApp(MyApp());
+  initializeDateFormatting('fr', null).then((_) => runApp(MyApp()));
+  // runApp(MyApp());
 }
 
 // void callbackDispatcher() {
@@ -87,6 +61,8 @@ void main() async {
 //     return Future.value(true);
 //   });
 // }
+GlobalKey<NavigatorState> navigatorKey =
+    GlobalKey(debugLabel: "Main Navigator");
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -116,6 +92,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
+        // navigatorKey: navigatorKey,
         title: 'DRH/MEF ONLINE',
         theme: ThemeData(
           primarySwatch: Colors.orange,
@@ -135,8 +112,7 @@ class LoginContent extends StatefulWidget {
 class _LoginContentState extends State<LoginContent> {
   TextEditingController nameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
-  final GlobalKey<ScaffoldState> _drawerKey = GlobalKey();
+  // final GlobalKey<ScaffoldState> _drawerKey = GlobalKey();
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
   TwilioFlutter twilioFlutter;
   FirebaseAuth auth = FirebaseAuth.instance;
@@ -144,7 +120,6 @@ class _LoginContentState extends State<LoginContent> {
 
   @override
   void initState() {
-    super.initState();
     _obscurePassword = true;
     twilioFlutter = TwilioFlutter(
         accountSid: 'AC4cb8ad07e86ad04b7cd18a2737796b3d',
@@ -152,6 +127,32 @@ class _LoginContentState extends State<LoginContent> {
         twilioNumber: '+14103767481');
     super.initState();
 
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+      await _showNotification('${message.notification.title}',
+          '${message.notification.body}', '${message.data['navigation']}');
+      print("onMessage: ${message.data['navigation']}");
+    });
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
+      print("onMessageOpenedApp: $message");
+      // Navigator.push(
+      //   context,
+      //   MaterialPageRoute(
+      //     builder: (context) => MyApp(),
+      //   ),
+      // );
+      // navigatorKey.currentState
+      //     .push(MaterialPageRoute(builder: (_) => RetraiteProccedure()));
+      //
+      // if (message.data["screen"] == "/retraite") {
+      // Navigator.push(navigatorKey.currentState.context,
+      //     MaterialPageRoute(builder: (context) => RetraiteProccedure()));
+      // }
+      // if (message.data["screen"] == "/demandeacte") {
+      //   Navigator.push(navigatorKey.currentState.context,
+      //       MaterialPageRoute(builder: (context) => Demande_Actes()));
+      // }
+    });
     var androidInitilize =
         new AndroidInitializationSettings('@mipmap/ic_launcher');
     var iOSinitilize = IOSInitializationSettings(
@@ -162,141 +163,164 @@ class _LoginContentState extends State<LoginContent> {
     flutterLocalNotificationsPlugin.initialize(initilizationsSettings,
         onSelectNotification: notificationSelected);
 
-    if (Platform.isAndroid) {
-      print('android platform');
-      firebaseCloudMessagingListeners();
-    }
-    _firebaseMessaging.configure(
-      onMessage: (Map<String, dynamic> message) async {
-        print("onMessage: $message");
-        await _showNotification('${message['notification']['title']}',
-            '${message['notification']['body']}');
-      },
-      onBackgroundMessage: myBackgroundMessageHandler,
-      onLaunch: (Map<String, dynamic> message) async {
-        print("onLaunch: $message");
-      },
-      onResume: (Map<String, dynamic> message) async {
-        print("onResume: $message");
-      },
-    );
+    // if (Platform.isAndroid) {
+    //   print('android platform');
+    // }
+    // _firebaseMessaging.configure(
+    //   onMessage: (Map<String, dynamic> message) async {
+    //     print("onMessage: $message");
+    //     await _showNotification('${message['notification']['title']}',
+    //         '${message['notification']['body']}', message['screen']);
+    //     navigatorKey.currentState
+    //         .push(MaterialPageRoute(builder: (_) => LoginContent()));
+    //   },
+    //   onBackgroundMessage: myBackgroundMessageHandler,
+    //   onLaunch: (Map<String, dynamic> message) async {
+    //     print("onLaunch: $message");
+    //   },
+    //   onResume: (Map<String, dynamic> message) async {
+    //     //   SchedulerBinding.instance.addPostFrameCallback((_) {
+    //     //     Navigator.of(GlobalVariable.navState.currentContext)
+    //     //         .push(MaterialPageRoute(
+    //     //         builder: (context) => Demande_Actes(
+    //     //         )));
+    //     //   print("onResume: $message");
+    //     await _showNotification('${message['notification']['title']}',
+    //         '${message['notification']['body']}', message['screen']);
+    //   },
+    // );
   }
 
   Future onDidReceiveLocalNotification(
       int id, String title, String body, String payload) async {
     // display a dialog with the notification details, tap ok to go to another page
-    showDialog(
-      context: context,
-      builder: (BuildContext context) => CupertinoAlertDialog(
-        title: Text(title),
-        content: Text(body),
-        actions: [
-          CupertinoDialogAction(
-            isDefaultAction: true,
-            child: Text('Ouvrir'),
-            onPressed: () async {
-              Navigator.of(context, rootNavigator: true).pop();
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => Demande_Actes(),
-                ),
-              );
-            },
-          )
-        ],
-      ),
-    );
+    // showDialog(
+    //   context: context,
+    //   builder: (BuildContext context) => CupertinoAlertDialog(
+    //     title: Text(title),
+    //     content: Text(body),
+    //     actions: [
+    //       CupertinoDialogAction(
+    //         isDefaultAction: true,
+    //         child: Text('Ouvrir'),
+    //         onPressed: () async {
+    //           // Navigator.of(context, rootNavigator: true).pop();
+    //           print(title);
+    //           await Navigator.push(
+    //             context,
+    //             MaterialPageRoute(
+    //               builder: (context) => RetraiteProccedure(),
+    //             ),
+    //           );
+    //         },
+    //       )
+    //     ],
+    //   ),
+    // );
   }
 
   Future notificationSelected(String payload) async {
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (context) => LoginContent(),
+    //   ),
+    // );
     // showDialog(
     //   context: context,
     //   builder: (context) => AlertDialog(
     //     content: Text("Notification Clicked $payload"),
     //   ),
     // );
-    Navigator.of(context, rootNavigator: true).pop();
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Demande_Actes(),
-      ),
-    );
+    if (payload.isNotEmpty) {
+      // Navigator.push(
+      //   context,
+      //   MaterialPageRoute(
+      //     builder: (context) => MyApp(),
+      //   ),
+      // );
+    }
+
+    // Navigator.of(context, rootNavigator: true).pop();
   }
 
-  Future _showNotification(String title, String description) async {
+  Future _showNotification(
+      String title, String description, String otherData) async {
     print(description);
     int randomInt = Random().nextInt(100);
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails('12345', 'channelName', 'channelDescription',
+        AndroidNotificationDetails('1234', 'channelName', 'channelDescription',
             importance: Importance.max,
             priority: Priority.high,
             showWhen: false);
     const NotificationDetails platformChannelSpecifics =
         NotificationDetails(android: androidPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.show(
-        randomInt, '$title', '$description', platformChannelSpecifics,
-        payload: 'item x');
+        12345, '$title', '$description', platformChannelSpecifics,
+        payload: '$otherData');
   }
 
   void firebaseCloudMessagingListeners() {
-    _firebaseMessaging.configure(
-      onBackgroundMessage: myBackgroundMessageHandler,
-      onMessage: (Map<String, dynamic> message) async {
-        print("onMessage2: $message");
-        await _showNotification(
-            message['notification']['title'], message['notification']['body']);
-      },
-      onLaunch: (Map<String, dynamic> message) async {
-        print("onLaunch: $message");
-        await _showNotification('onResume', 'efg');
-      },
-      onResume: (Map<String, dynamic> message) async {
-        print("onResume: $message");
-        await _showNotification('onLaunch', message['data']);
-      },
-    );
+    //TODO: COMMENTED FIREBASE MESSAGE.CONFIGURE
+    // _firebaseMessaging.configure(
+    //   onBackgroundMessage: myBackgroundMessageHandler,
+    //   onMessage: (Map<String, dynamic> message) async {
+    //     print("onMessage2: $message");
+    //     await _showNotification(message['notification']['title'],
+    //         message['notification']['body'], '');
+    //   },
+    //   onLaunch: (Map<String, dynamic> message) async {
+    //     print("onLaunch: $message");
+    //     await _showNotification('onResume', 'efg', '');
+    //   },
+    //   onResume: (Map<String, dynamic> message) async {
+    //     print("onResume: $message");
+    //     await _showNotification('onLaunch', message['data'], '');
+    //   },
+    // );
   }
 
   @override
   Widget build(BuildContext context) {
     final firebaseUser = context.watch<User>();
+
     if (firebaseUser != null) {
-      return homelogin(context);
+      return FutureBuilder<DocumentSnapshot>(
+          future: FirebaseFirestore.instance
+              .collection('Profile')
+              .doc(firebaseUser.uid)
+              .get(),
+          builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+            if (snapshot == null ||
+                snapshot.data == null ||
+                snapshot.data.data() == null) return Container();
+            if (snapshot.hasData) {
+              String data = snapshot.data.data()['accountType'];
+              switch (data) {
+                case 'agent':
+                  return AgentLogin();
+                case 'public':
+                  return PublicLogin();
+                default:
+                  return AgentLogin();
+              }
+              return Container();
+            } else
+              return Center(
+                child: CircularProgressIndicator(),
+              );
+          });
+      return Center(
+        child: CircularProgressIndicator(),
+      );
     }
     return loginuserview(context);
-
-    // return FutureBuilder(
-    //     future: getStatutsUser(),
-    //     builder: (BuildContext context, snapshot) {
-    //       switch (snapshot.connectionState) {
-    //         case ConnectionState.waiting:
-    //           return Center(
-    //             child: Center(child: CircularProgressIndicator()),
-    //           );
-    //         case ConnectionState.done:
-    //           print('connection state : ${snapshot.data}');
-    //           if (snapshot.data != null) {
-    //             return homelogin(context);
-    //             break;
-    //           }
-    //           return loginuserview(context);
-    //           break;
-    //         case ConnectionState.none:
-    //           // TODO: Handle this case.
-    //           break;
-    //         case ConnectionState.active:
-    //           // TODO: Handle this case.
-    //           break;
-    //       }
-    //       return Text('');
-    //     });
   }
 
   Widget loginuserview(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: Center(
           child: Text(
             'Login Page',
@@ -376,13 +400,27 @@ class _LoginContentState extends State<LoginContent> {
                     String email = nameController.text.toLowerCase().trim();
                     String password = passwordController.text;
                     // bool result = await getLoginAgent([matricule, password]);
-                    context
-                        .read<AuthenticationService>()
-                        .signIn(email: email, password: password);
-                    bool result = await getLoginAgentFirebaseWay(
-                        email: email, password: password);
-                    Navigator.pushReplacement(context,
-                        MaterialPageRoute(builder: (context) => MyApp()));
+                    if (email.isNotEmpty && password.isNotEmpty) {
+                      var userId = await context
+                          .read<AuthenticationService>()
+                          .signIn(
+                              email: email,
+                              password: password,
+                              context: context);
+                      print('user login with id: $userId');
+                      FirebaseMessaging.instance.getToken().then((value) {
+                        print('user login with token: $value');
+                        FirebaseFirestore.instance
+                            .collection("Profile")
+                            .doc('${userId.toString()}')
+                            .update({'token': value});
+                      });
+                    } else {
+                      warningDialog(context,
+                          "Veuillez remplir les champs email et mot de passe");
+                    }
+                    // await getLoginAgentFirebaseWay(
+                    //     userId: userId, context: context, email: email);
                     //
                     // bool isInternet = await internetChecking();
                     // if (!isInternet) {
@@ -408,236 +446,241 @@ class _LoginContentState extends State<LoginContent> {
     );
   }
 
-  Widget homelogin(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    return FutureBuilder(
-      future: Firebase.initializeApp(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          return Scaffold(
-            appBar: AppBar(
-              // Here we take the value from the MyHomePage object that was created by
-              // the App.build method, and use it to set our appbar title.
-              title: const Text('DRH MEF ONLINE'),
-              centerTitle: true,
-            ),
-            body: DetailsInformations(),
-            drawer: Drawer(
-              key: _drawerKey,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.orangeAccent,
-                ),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: ListView(
-                        padding: EdgeInsets.zero,
-                        children: [
-                          DrawerHeader(
-                            child: Text(''),
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                  image: AssetImage("assets/images/logo.png"),
-                                  fit: BoxFit.fill),
-                              color: Colors.orange,
-                            ),
-                          ),
-                          // Expanded(
-                          //   child: Center(
-                          //     child: Text(
-                          //         'Bienvenu, ${auth.currentUser.displayName}'),
-                          //   ),
-                          // ),
-                          Divider(
-                            thickness: 3,
-                          ),
-                          ListTile(
-                            title: Text("Profile"),
-                            leading: Icon(Icons.person),
-                            onTap: () async {
-                              // Update the state of the app
-                              // ...
-                              // Then close the drawer
-                              FirebaseFirestore.instance
-                                  .collection('Profile')
-                                  .doc(auth.currentUser.uid)
-                                  .snapshots()
-                                  .forEach((element) {
-                                print(element.data());
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          ProfileDetails(values: element)),
-                                );
-                              });
-
-                              // Navigator.pop(context);
-                            },
-                          ),
-                          Divider(
-                            thickness: 2,
-                          ),
-                          //TODO: home for news
-                          // ListTile(
-                          //   title: Text(Constants.accueil),
-                          //   leading: Icon(Icons.home),
-                          //   onTap: () {
-                          //     // Update the state of the app
-                          //     // ...
-                          //     // Then close the drawer
-                          //     // Navigator.push(
-                          //     //   context,
-                          //     //   MaterialPageRoute(
-                          //     //       builder: (context) => DetailsInformations()),
-                          //     // );
-                          //
-                          //     Navigator.pop(context);
-                          //   },
-                          // ),
-                          // Divider(
-                          //   thickness: 2,
-                          // ),
-                          //TODO: Setting up for suggestion field
-                          // ListTile(
-                          //   title: Text(Constants.suggestion),
-                          //   leading: Icon(Icons.message),
-                          //   onTap: () {
-                          //     // Update the state of the app
-                          //     Navigator.push(
-                          //       context,
-                          //       MaterialPageRoute(
-                          //           builder: (context) => Complaint()),
-                          //     );
-                          //     // Then close the drawer
-                          //     // Navigator.pop(context);
-                          //   },
-                          // ),
-                          // Divider(
-                          //   thickness: 2,
-                          // ),
-                          ListTile(
-                            title: Text(Constants.dmd_act),
-                            leading: Icon(Icons.insert_drive_file),
-                            onTap: () {
-                              // Update the state of the app
-                              // ...
-                              // Then close the drawer
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => Demande_Actes()),
-                              );
-                              // Navigator.pop(context);
-                            },
-                          ),
-                          Divider(
-                            thickness: 2,
-                          ),
-
-                          // TODO: retreat field setting up
-                          ListTile(
-                            title: Text(Constants.retraite),
-                            leading: Icon(Icons.assistant),
-                            onTap: () {
-                              // Update the state of the app
-                              // ...
-                              // Then close the drawer
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => RetraiteProccedure()),
-                              );
-                              // Navigator.pop(context);
-                            },
-                          ),
-                          Divider(
-                            thickness: 2,
-                          ),
-                          // ListTile(
-                          //   title: Text(Constants.infos),
-                          //   leading: Icon(Icons.info),
-                          //   onTap: () {
-                          //     // Update the state of the app
-                          //     // ...
-                          //     // Then close the drawer
-                          //     // Navigator.push(
-                          //     //   context,
-                          //     //   MaterialPageRoute(
-                          //     //       builder: (context) => StatutsDemande()),
-                          //     // );
-                          //     // sendSms();
-                          //     // _showNotification('abc', 'efg');
-                          //     // createNewDemandeActe([
-                          //     //   'Motif is the motivation',
-                          //     //   'Nature Acte',
-                          //     //   'the piece jointe link'
-                          //     // ]);
-                          //   },
-                          // ),
-                          // Divider(
-                          //   thickness: 2,
-                          // ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                        child: TextButton(
-                      style: ButtonStyle(
-                        backgroundColor:
-                            MaterialStateProperty.all<Color>(Colors.red),
-                      ),
-                      onPressed: () async {
-                        SharedPreferences sharedPreferences =
-                            await SharedPreferences.getInstance();
-                        print('logout button clicked');
-                        sharedPreferences.clear();
-                        context.read<AuthenticationService>().signOut();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => MyApp()),
-                        );
-                      },
-                      child: TextButton(
-                        onPressed: () async {
-                          SharedPreferences shared =
-                              await SharedPreferences.getInstance();
-                          shared.clear();
-                          await auth.signOut();
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => MyApp()),
-                          );
-                        },
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.highlight_off,
-                              color: Colors.white,
-                            ),
-                            Expanded(
-                              child: Text(
-                                "Deconnecter",
-                                style: TextStyle(color: Colors.white),
-                                textAlign: TextAlign.center,
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    ))
-                  ],
-                ),
-              ),
-            ),
-          );
-        }
-        return CircularProgressIndicator();
-      },
-    );
-  }
+  // Widget homelogin(BuildContext context) {
+  //   // This method is rerun every time setState is called, for instance as done
+  //   // by the _incrementCounter method above.
+  //   return Scaffold(
+  //     body: FutureBuilder(
+  //       future: Firebase.initializeApp(),
+  //       builder: (context, snapshot) {
+  //         if (snapshot.connectionState == ConnectionState.done) {
+  //           return Scaffold(
+  //             appBar: AppBar(
+  //               // Here we take the value from the MyHomePage object that was created by
+  //               // the App.build method, and use it to set our appbar title.
+  //               title: const Text('DRH MEF ONLINE'),
+  //               centerTitle: true,
+  //             ),
+  //             body: DetailsInformations(),
+  //             drawer: Drawer(
+  //               // key: _drawerKey,
+  //               child: Container(
+  //                 decoration: BoxDecoration(
+  //                   color: Colors.orangeAccent,
+  //                 ),
+  //                 child: Column(
+  //                   children: [
+  //                     Expanded(
+  //                       child: ListView(
+  //                         padding: EdgeInsets.zero,
+  //                         children: [
+  //                           DrawerHeader(
+  //                             child: Text(''),
+  //                             decoration: BoxDecoration(
+  //                               image: DecorationImage(
+  //                                   image: AssetImage("assets/images/logo.png"),
+  //                                   fit: BoxFit.fill),
+  //                               color: Colors.orange,
+  //                             ),
+  //                           ),
+  //                           // Expanded(
+  //                           //   child: Center(
+  //                           //     child: Text(
+  //                           //         'Bienvenu, ${auth.currentUser.displayName}'),
+  //                           //   ),
+  //                           // ),
+  //                           Divider(
+  //                             thickness: 3,
+  //                           ),
+  //                           ListTile(
+  //                             title: Text("Profile"),
+  //                             leading: Icon(Icons.person),
+  //                             onTap: () async {
+  //                               // Update the state of the app
+  //                               // ...
+  //                               // Then close the drawer
+  //                               FirebaseFirestore.instance
+  //                                   .collection('Profile')
+  //                                   .doc(auth.currentUser.uid)
+  //                                   .snapshots()
+  //                                   .forEach((element) {
+  //                                 print(element.data());
+  //                                 Navigator.push(
+  //                                   context,
+  //                                   MaterialPageRoute(
+  //                                       builder: (context) =>
+  //                                           ProfileDetails(values: element)),
+  //                                 );
+  //                               });
+  //
+  //                               // Navigator.pop(context);
+  //                             },
+  //                           ),
+  //                           Divider(
+  //                             thickness: 2,
+  //                           ),
+  //                           //TODO: home for news
+  //                           ListTile(
+  //                             title: Text(Constants.accueil),
+  //                             leading: Icon(Icons.home),
+  //                             onTap: () {
+  //                               // Update the state of the app
+  //                               // ...
+  //                               // Then close the drawer
+  //                               Navigator.push(
+  //                                 context,
+  //                                 MaterialPageRoute(
+  //                                     builder: (context) => Dashboard()),
+  //                               );
+  //
+  //                               // Navigator.pop(context);
+  //                             },
+  //                           ),
+  //                           Divider(
+  //                             thickness: 2,
+  //                           ),
+  //                           //TODO: Setting up for suggestion field
+  //                           // ListTile(
+  //                           //   title: Text(Constants.suggestion),
+  //                           //   leading: Icon(Icons.message),
+  //                           //   onTap: () {
+  //                           //     // Update the state of the app
+  //                           //     Navigator.push(
+  //                           //       context,
+  //                           //       MaterialPageRoute(
+  //                           //           builder: (context) => Complaint()),
+  //                           //     );
+  //                           //     // Then close the drawer
+  //                           //     // Navigator.pop(context);
+  //                           //   },
+  //                           // ),
+  //                           // Divider(
+  //                           //   thickness: 2,
+  //                           // ),
+  //                           ListTile(
+  //                             title: Text(Constants.dmd_act),
+  //                             leading: Icon(Icons.insert_drive_file),
+  //                             onTap: () {
+  //                               // Update the state of the app
+  //                               // ...
+  //                               // Then close the drawer
+  //                               Navigator.push(
+  //                                 context,
+  //                                 MaterialPageRoute(
+  //                                     builder: (context) => Demande_Actes()),
+  //                               );
+  //                               // Navigator.pop(context);
+  //                             },
+  //                           ),
+  //                           Divider(
+  //                             thickness: 2,
+  //                           ),
+  //
+  //                           // TODO: retreat field setting up
+  //                           ListTile(
+  //                             title: Text(Constants.retraite),
+  //                             leading: Icon(Icons.assistant),
+  //                             onTap: () {
+  //                               // Update the state of the app
+  //                               // ...
+  //                               // Then close the drawer
+  //                               Navigator.push(
+  //                                 context,
+  //                                 MaterialPageRoute(
+  //                                     builder: (context) =>
+  //                                         RetraiteProccedure()),
+  //                               );
+  //                               // Navigator.pop(context);
+  //                             },
+  //                           ),
+  //                           Divider(
+  //                             thickness: 2,
+  //                           ),
+  //                           // ListTile(
+  //                           //   title: Text(Constants.infos),
+  //                           //   leading: Icon(Icons.info),
+  //                           //   onTap: () {
+  //                           //     // Update the state of the app
+  //                           //     // ...
+  //                           //     // Then close the drawer
+  //                           //     // Navigator.push(
+  //                           //     //   context,
+  //                           //     //   MaterialPageRoute(
+  //                           //     //       builder: (context) => StatutsDemande()),
+  //                           //     // );
+  //                           //     // sendSms();
+  //                           //     // _showNotification('abc', 'efg');
+  //                           //     // createNewDemandeActe([
+  //                           //     //   'Motif is the motivation',
+  //                           //     //   'Nature Acte',
+  //                           //     //   'the piece jointe link'
+  //                           //     // ]);
+  //                           //   },
+  //                           // ),
+  //                           // Divider(
+  //                           //   thickness: 2,
+  //                           // ),
+  //                         ],
+  //                       ),
+  //                     ),
+  //                     Container(
+  //                         child: TextButton(
+  //                       style: ButtonStyle(
+  //                         backgroundColor:
+  //                             MaterialStateProperty.all<Color>(Colors.red),
+  //                       ),
+  //                       onPressed: () async {
+  //                         SharedPreferences sharedPreferences =
+  //                             await SharedPreferences.getInstance();
+  //                         print('logout button clicked');
+  //                         sharedPreferences.clear();
+  //                         context.read<AuthenticationService>().signOut();
+  //                         Navigator.push(
+  //                           context,
+  //                           MaterialPageRoute(
+  //                               builder: (context) => LoginContent()),
+  //                         );
+  //                       },
+  //                       child: TextButton(
+  //                         onPressed: () async {
+  //                           SharedPreferences shared =
+  //                               await SharedPreferences.getInstance();
+  //                           shared.clear();
+  //                           await auth.signOut();
+  //                           Navigator.pushReplacement(
+  //                             context,
+  //                             MaterialPageRoute(
+  //                                 builder: (context) => LoginContent()),
+  //                           );
+  //                         },
+  //                         child: Row(
+  //                           children: [
+  //                             Icon(
+  //                               Icons.highlight_off,
+  //                               color: Colors.white,
+  //                             ),
+  //                             Expanded(
+  //                               child: Text(
+  //                                 "Deconnecter",
+  //                                 style: TextStyle(color: Colors.white),
+  //                                 textAlign: TextAlign.center,
+  //                               ),
+  //                             )
+  //                           ],
+  //                         ),
+  //                       ),
+  //                     ))
+  //                   ],
+  //                 ),
+  //               ),
+  //             ),
+  //           );
+  //         }
+  //         return CircularProgressIndicator();
+  //       },
+  //     ),
+  //   );
+  // }
 
   showLoaderDialog(BuildContext context) {
     AlertDialog alert = AlertDialog(

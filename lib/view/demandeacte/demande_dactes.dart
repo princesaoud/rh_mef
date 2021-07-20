@@ -1,29 +1,109 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:commons/commons.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:rh_mef/constantes.dart';
+import 'package:rh_mef/custom_drawer/drawer_user_controller.dart';
+import 'package:rh_mef/custom_drawer/home_drawer.dart';
 import 'package:rh_mef/main.dart';
 import 'package:rh_mef/models/ActeModel.dart';
 import 'package:rh_mef/models/mDemandeActe.dart';
 import 'package:rh_mef/models/stepsActe.dart';
 import 'package:rh_mef/net/firebase.dart';
-import 'package:rh_mef/selectFileSystem.dart';
+import 'package:rh_mef/view/authservice/agent/agentlogin.dart';
+import 'package:rh_mef/view/authservice/profiledetails.dart';
+import 'package:rh_mef/view/complaint/complaint.dart';
+import 'package:rh_mef/view/retraite/retraiteProcedure.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../app_theme.dart';
 import 'statutsDeliveryDemande.dart';
 
 /// This is the main application widget.
+
+class DemandeActes extends StatefulWidget {
+  @override
+  _DemandeActesState createState() => _DemandeActesState();
+}
+
+class _DemandeActesState extends State<DemandeActes> {
+  Widget screenView;
+  DrawerIndex drawerIndex;
+  final FirebaseAuth auth = FirebaseAuth.instance;
+
+  @override
+  void initState() {
+    drawerIndex = DrawerIndex.Demande;
+    screenView = DemandeActesContent();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        top: false,
+        bottom: false,
+        child: Scaffold(
+          backgroundColor: AppTheme.nearlyWhite,
+          body: DrawerUserController(
+            screenIndex: drawerIndex,
+            drawerWidth: MediaQuery.of(context).size.width * 0.75,
+            onDrawerCall: (DrawerIndex drawerIndexdata) {
+              changeIndex(drawerIndexdata);
+              // callback from drawer for replace screen as user need with passing DrawerIndex(Enum index)
+            },
+            screenView: screenView,
+            //we replace screen view as we need on navigate starting screens like MyHomePage, HelpScreen, FeedbackScreen, etc...
+          ),
+        ),
+      ),
+    );
+  }
+
+  void changeIndex(DrawerIndex drawerIndexdata) {
+    if (drawerIndex != drawerIndexdata) {
+      drawerIndex = drawerIndexdata;
+      if (drawerIndex == DrawerIndex.Acceuil) {
+        setState(() {
+          screenView = AgentLoginContent();
+        });
+      } else if (drawerIndex == DrawerIndex.Retraite) {
+        setState(() {
+          screenView = RetraiteProccedure();
+        });
+      } else if (drawerIndex == DrawerIndex.Demande) {
+        setState(() {
+          screenView = DemandeActesContent();
+        });
+      } else if (drawerIndex == DrawerIndex.Temoigngage) {
+        setState(() {
+          screenView = ComplaintContent();
+        });
+      } else if (drawerIndex == DrawerIndex.Profile) {
+        setState(() {
+          screenView = ProfileDetails();
+        });
+      } else {
+        //do in your way......
+      }
+    }
+  }
+}
+
 // ignore: camel_case_types
-class Demande_Actes extends StatelessWidget {
+class DemandeActesContent extends StatelessWidget {
   static const String _title = 'Demande d\'acte';
-  const Demande_Actes({Key key}) : super(key: key);
+  const DemandeActesContent({Key key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -33,16 +113,20 @@ class Demande_Actes extends StatelessWidget {
         appBar: AppBar(
           // Here we take the value from the MyHomePage object that was created by
           // the App.build method, and use it to set our appbar title.
-          title: const Text("Demande d'acte"),
-          centerTitle: true,
-          backgroundColor: Colors.orangeAccent,
-          leading: IconButton(
-            onPressed: () {
-              Navigator.pushReplacement(
-                  context, MaterialPageRoute(builder: (context) => MyApp()));
-            },
-            icon: Icon(Icons.arrow_back),
+          title: const Text(
+            "Demande d'acte",
+            style: TextStyle(color: Colors.black),
           ),
+          centerTitle: true,
+          backgroundColor: AppTheme.nearlyWhite,
+          // leading: IconButton(
+          //   onPressed: () {
+          //     // Navigator.pushReplacement(
+          //     //     context, MaterialPageRoute(builder: (context) => MyApp()));
+          //     Navigator.pop(context);
+          //   },
+          //   icon: Icon(Icons.arrow_back),
+          // ),
         ),
         body: Center(
           child: MyStatefulWidget(),
@@ -99,8 +183,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             future: getMatricule(),
             builder: (BuildContext context,
                 AsyncSnapshot<String> snapshotMatricule) {
-              print('matricule est: ${snapshotMatricule.data}');
-              print('userId est: ${auth.currentUser.uid}');
+              // print('matricule est: ${snapshotMatricule.data}');
+              // print('userId est: ${auth.currentUser.uid}');
               return StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection("ActeDemand")
@@ -154,13 +238,15 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                 //       "Bool said no $demandeName is diff to ${element.acteName}");
                                 // }
                                 if (demandeName.trim().toLowerCase().compareTo(
-                                        "${element.acteName}"
+                                        "${element.acteName.toLowerCase()}"
                                             .trim()
                                             .toLowerCase()) ==
                                     0) {
-                                  print("acteName: ${element.acteName}");
+                                  // print("acteName: ${element.acteName}");
                                   listforSteps = element.steps;
                                   listforStepsError = element.stepsError;
+                                  print(
+                                      'demandeActe: ${listforSteps.toString()}');
                                 }
                               });
                               Navigator.push(
@@ -213,7 +299,9 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                         '${prefs.getString('priseDeService')}',
                         '${prefs.getString('fonction')}',
                       ];
-                      if (values[0] == null || values[0] == 'null')
+                      if (values[0] == null ||
+                          values[0] == 'null' ||
+                          values == null)
                         await FirebaseFirestore.instance
                             .collection('Profile')
                             .doc(auth.currentUser.uid)
@@ -234,7 +322,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                         warningDialog(context,
                             "Veuillez remplir votre profile avant de faire une demande");
                       }
-                      Navigator.pushReplacement(
+                      Navigator.push(
                           context,
                           MaterialPageRoute(
                               builder: (context) =>
@@ -258,14 +346,14 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   @override
   void initState() {
     super.initState();
-    FirebaseMessaging().getToken().then((value) {
+    FirebaseMessaging.instance.getToken().then((value) {
       mDeviceToken = value;
       print(mDeviceToken);
     });
-    Firebase.initializeApp().whenComplete(() {
-      print("completed");
-      setState(() {});
-    });
+    // Firebase.initializeApp().whenComplete(() {
+    //   print("completed");
+    //   setState(() {});
+    // });
     myControllerSearch.addListener(_onSearchChanged);
   }
 
@@ -295,16 +383,17 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
   final myControllerTel = TextEditingController();
   final myControllerEmail = TextEditingController();
   final myControllerSearch = TextEditingController();
+  File _image;
+  // File _image;
   String datePicked = "Click pour date de prise de service (MEF)";
   String pickedEmploi = "Click Pour choisir votre emploi";
-  String pickedActes = "Click pour choisir votre actes";
-  String pickedPiecesJointe = "Ajouter une piece jointes";
-  String pickedMotif = "Click Pour ajouter une motif";
+  String pickedActes = "";
+  String pickedPiecesJointe = "";
+  String pickedMotif = "";
   DateTime _dateTime;
   int codeMotif = 1;
 
   String _currentValueSelected = "Cliquez ici pour faire un choix";
-  @override
   Widget build(BuildContext context) {
     myControllerMatricule.text = '${widget.values[1]}';
     myControllerNom.text = widget.values[2];
@@ -313,19 +402,25 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
     datePicked = widget.values[5];
     pickedEmploi = widget.values[6];
     return Scaffold(
+      backgroundColor: AppTheme.notWhite.withOpacity(0.5),
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: const Text("Faire une nouvelle demande d'acte"),
-        centerTitle: true,
-        backgroundColor: Colors.orangeAccent,
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pushReplacement(context,
-                MaterialPageRoute(builder: (context) => Demande_Actes()));
-          },
-          icon: Icon(Icons.close),
+        leading: Text(""),
+        title: Text(
+          "Créer nouvelle démande ",
+          style: TextStyle(color: AppTheme.grey),
         ),
+        backgroundColor: AppTheme.nearlyWhite,
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.close,
+              color: AppTheme.grey,
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+        ],
       ),
       body: ListView(
         children: <Widget>[
@@ -340,7 +435,8 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
           ),
           new ListTile(
             leading: const Icon(Icons.person),
-            title: new TextField(
+            title: new TextFormField(
+              readOnly: true,
               controller: myControllerNom,
               decoration: new InputDecoration(
                 hintText: "Nom et Prénoms",
@@ -350,6 +446,7 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
           new ListTile(
             leading: const Icon(Icons.phone),
             title: new TextField(
+              readOnly: true,
               controller: myControllerTel,
               decoration: new InputDecoration(
                 hintText: "Telephone",
@@ -359,6 +456,7 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
           new ListTile(
             leading: const Icon(Icons.email),
             title: new TextField(
+              readOnly: true,
               controller: myControllerEmail,
               decoration: new InputDecoration(
                 hintText: "Email",
@@ -385,18 +483,21 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
               _showDropList(2);
             },
             leading: const Icon(Icons.file_copy),
-            title: new Text(pickedActes),
+            title: new Text(pickedActes != ""
+                ? pickedActes
+                : "Cliquez ici pour choisir votre démande d'acte"),
           ),
           // _showDropList(Constants.list_actes, 2);
           TextButton(
             onPressed: () async {
-              SharedPreferences prefs = await SharedPreferences.getInstance();
-              prefs.setString(
-                  Constants.prefs_imageName, DateTime.now().toString());
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => SelectFileSys()),
-              );
+              // SharedPreferences prefs = await SharedPreferences.getInstance();
+              // prefs.setString(
+              //     Constants.prefs_imageName, DateTime.now().toString());
+              // Navigator.push(
+              //   context,
+              //   MaterialPageRoute(builder: (context) => SelectFileSys()),
+              // );
+              _showPicker(context);
             },
             child: Column(
               children: [
@@ -409,12 +510,16 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
                       ),
                       padding: EdgeInsets.only(left: 10),
                     ),
-                    Container(
-                      child: Text(
-                        pickedPiecesJointe,
-                        style: TextStyle(color: Colors.black),
+                    Expanded(
+                      child: Container(
+                        child: Text(
+                          pickedPiecesJointe == ""
+                              ? "Choisir votre piece jointe"
+                              : pickedPiecesJointe,
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        padding: EdgeInsets.only(left: 30),
                       ),
-                      padding: EdgeInsets.only(left: 30),
                     ),
                   ],
                 ),
@@ -426,8 +531,10 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
               _showDropList(4);
             },
             leading: Icon(Icons.file_copy_rounded),
-            title: Text('Motifs'),
-            subtitle: Text(pickedMotif),
+            title: Text(pickedMotif != ""
+                ? pickedMotif
+                : 'Spécifier la motif de votre démande'),
+            // subtitle: Text(pickedMotif),
           ),
           const Divider(
             height: 2.0,
@@ -456,7 +563,8 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
                     : "N/A";
                 String emploi = pickedEmploi;
                 String acte = pickedActes;
-                String piece = prefs.getString("imageUrl");
+                // String piece = prefs.getString("imageUrl");
+                String piece = pickedPiecesJointe;
                 String motif = pickedMotif;
                 String dated = datePicked;
                 String numeroDemande = DateTime.now().toString();
@@ -475,19 +583,30 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
                     numeroDemande,
                     1,
                     true);
-                demandeActeSetup(_demandeacte);
-                print('demande d\'acte envoye');
-                String description =
-                    "Une nouvelle demande d'acte est en attente de validation";
-                // String userToken = FirebaseFirestore.instance
-                //     .collection('adminKey')
-                //     .doc('key')
-                //     .toString();
-                successDialog(context, 'Votre demande est envoyé avec succès');
-                // callOnFcmApiSendPushNotifications(userToken, description);
-                Navigator.pushReplacement(
-                    context, MaterialPageRoute(builder: (context) => MyApp()));
-                // print(_demandeacte.toString());
+
+                if (acte == null || acte == "") {
+                  warningDialog(
+                      context, "Veuillez spécifier votre démande d'acte");
+                } else if (motif == null || motif == "") {
+                  warningDialog(context,
+                      "Veuillez spécifier le motif de votre démande d'acte");
+                } else {
+                  // demandeActeSetup(_demandeacte);
+                  uploadImageToFirebase(context, _image, _demandeacte);
+                  print('demande d\'acte envoye');
+                  String description =
+                      "Une nouvelle demande d'acte est en attente de validation";
+                  // String userToken = FirebaseFirestore.instance
+                  //     .collection('adminKey')
+                  //     .doc('key')
+                  //     .toString();
+                  successDialog(
+                      context, 'Votre demande est envoyé avec succès');
+                  // callOnFcmApiSendPushNotifications(userToken, description);
+                  Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (context) => LoginContent()));
+                  // print(_demandeacte.toString());
+                }
               },
             ),
           ),
@@ -495,6 +614,221 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
       ),
     );
   }
+
+  // Widget build(BuildContext context) {
+  //   myControllerMatricule.text = '${widget.values[1]}';
+  //   myControllerNom.text = widget.values[2];
+  //   myControllerTel.text = widget.values[3];
+  //   myControllerEmail.text = widget.values[4];
+  //   datePicked = widget.values[5];
+  //   pickedEmploi = widget.values[6];
+  //   return Scaffold(
+  //     appBar: AppBar(
+  //       // Here we take the value from the MyHomePage object that was created by
+  //       // the App.build method, and use it to set our appbar title.
+  //       title: const Text("Faire une nouvelle demande d'acte"),
+  //       centerTitle: true,
+  //       backgroundColor: Colors.orangeAccent,
+  //       leading: IconButton(
+  //         onPressed: () {
+  //           Navigator.pushReplacement(context,
+  //               MaterialPageRoute(builder: (context) => DemandeActes()));
+  //         },
+  //         icon: Icon(Icons.close),
+  //       ),
+  //     ),
+  //     body: ListView(
+  //       children: <Widget>[
+  //         new ListTile(
+  //           leading: const Icon(Icons.person),
+  //           title: new TextField(
+  //             controller: myControllerMatricule,
+  //             decoration: new InputDecoration(
+  //               hintText: "Entrer le matricule",
+  //             ),
+  //           ),
+  //         ),
+  //         new ListTile(
+  //           leading: const Icon(Icons.person),
+  //           title: new TextFormField(
+  //             readOnly: true,
+  //             controller: myControllerNom,
+  //             decoration: new InputDecoration(
+  //               hintText: "Nom et Prénoms",
+  //             ),
+  //           ),
+  //         ),
+  //         new ListTile(
+  //           leading: const Icon(Icons.phone),
+  //           title: new TextField(
+  //             readOnly: true,
+  //             controller: myControllerTel,
+  //             decoration: new InputDecoration(
+  //               hintText: "Telephone",
+  //             ),
+  //           ),
+  //         ),
+  //         new ListTile(
+  //           leading: const Icon(Icons.email),
+  //           title: new TextField(
+  //             readOnly: true,
+  //             controller: myControllerEmail,
+  //             decoration: new InputDecoration(
+  //               hintText: "Email",
+  //             ),
+  //           ),
+  //         ),
+  //         new ListTile(
+  //           onTap: () {
+  //             _showDatePicker();
+  //           },
+  //           leading: const Icon(Icons.date_range),
+  //           title: Text(datePicked),
+  //         ),
+  //         new ListTile(
+  //           onTap: () {
+  //             _showDropList(1);
+  //           },
+  //           leading: const Icon(Icons.format_align_justify_outlined),
+  //           title: new Text(pickedEmploi),
+  //         ),
+  //         new ListTile(
+  //           onTap: () {
+  //             pickedMotif = "";
+  //             _showDropList(2);
+  //           },
+  //           leading: const Icon(Icons.file_copy),
+  //           title: new Text(pickedActes != ""
+  //               ? pickedActes
+  //               : "Cliquez ici pour choisir votre démande d'acte"),
+  //         ),
+  //         // _showDropList(Constants.list_actes, 2);
+  //         TextButton(
+  //           onPressed: () async {
+  //             // SharedPreferences prefs = await SharedPreferences.getInstance();
+  //             // prefs.setString(
+  //             //     Constants.prefs_imageName, DateTime.now().toString());
+  //             // Navigator.push(
+  //             //   context,
+  //             //   MaterialPageRoute(builder: (context) => SelectFileSys()),
+  //             // );
+  //             _showPicker(context);
+  //           },
+  //           child: Column(
+  //             children: [
+  //               Row(
+  //                 children: [
+  //                   Container(
+  //                     child: Icon(
+  //                       Icons.photo_camera_outlined,
+  //                       color: Colors.grey,
+  //                     ),
+  //                     padding: EdgeInsets.only(left: 10),
+  //                   ),
+  //                   Expanded(
+  //                     child: Container(
+  //                       child: Text(
+  //                         pickedPiecesJointe == ""
+  //                             ? "Choisir votre piece jointe"
+  //                             : pickedPiecesJointe,
+  //                         style: TextStyle(color: Colors.black),
+  //                       ),
+  //                       padding: EdgeInsets.only(left: 30),
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         ListTile(
+  //           onTap: () {
+  //             _showDropList(4);
+  //           },
+  //           leading: Icon(Icons.file_copy_rounded),
+  //           title: Text(pickedMotif != ""
+  //               ? pickedMotif
+  //               : 'Spécifier la motif de votre démande'),
+  //           // subtitle: Text(pickedMotif),
+  //         ),
+  //         const Divider(
+  //           height: 2.0,
+  //         ),
+  //         ListTile(
+  //           title: FlatButton(
+  //             color: Colors.orange,
+  //             padding: EdgeInsets.all(10.0),
+  //             child: Text(
+  //               "Valider",
+  //               style: TextStyle(fontSize: 20.0),
+  //             ),
+  //             onPressed: () async {
+  //               SharedPreferences prefs = await SharedPreferences.getInstance();
+  //               String matricule = myControllerMatricule.value.text.isNotEmpty
+  //                   ? myControllerMatricule.value.text
+  //                   : "N/A";
+  //               String nom = myControllerNom.value.text.isNotEmpty
+  //                   ? myControllerNom.value.text
+  //                   : "N/A";
+  //               String tel = myControllerTel.value.text.isNotEmpty
+  //                   ? myControllerTel.value.text
+  //                   : "N/A";
+  //               String email = myControllerEmail.value.text.isNotEmpty
+  //                   ? myControllerEmail.value.text
+  //                   : "N/A";
+  //               String emploi = pickedEmploi;
+  //               String acte = pickedActes;
+  //               // String piece = prefs.getString("imageUrl");
+  //               String piece = pickedPiecesJointe;
+  //               String motif = pickedMotif;
+  //               String dated = datePicked;
+  //               String numeroDemande = DateTime.now().toString();
+  //               DemandeActe _demandeacte = DemandeActe(
+  //                   "",
+  //                   "",
+  //                   matricule,
+  //                   nom,
+  //                   tel,
+  //                   email,
+  //                   dated,
+  //                   emploi,
+  //                   acte,
+  //                   piece,
+  //                   motif,
+  //                   numeroDemande,
+  //                   1,
+  //                   true);
+  //
+  //               if (acte == null || acte == "") {
+  //                 warningDialog(
+  //                     context, "Veuillez spécifier votre démande d'acte");
+  //               } else if (motif == null || motif == "") {
+  //                 warningDialog(context,
+  //                     "Veuillez spécifier le motif de votre démande d'acte");
+  //               } else {
+  //                 // demandeActeSetup(_demandeacte);
+  //                 uploadImageToFirebase(context, _image, _demandeacte);
+  //                 print('demande d\'acte envoye');
+  //                 String description =
+  //                     "Une nouvelle demande d'acte est en attente de validation";
+  //                 // String userToken = FirebaseFirestore.instance
+  //                 //     .collection('adminKey')
+  //                 //     .doc('key')
+  //                 //     .toString();
+  //                 successDialog(
+  //                     context, 'Votre demande est envoyé avec succès');
+  //                 // callOnFcmApiSendPushNotifications(userToken, description);
+  //                 Navigator.pushReplacement(context,
+  //                     MaterialPageRoute(builder: (context) => LoginContent()));
+  //                 // print(_demandeacte.toString());
+  //               }
+  //             },
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   formFillList(int type, int code) {
     switch (type) {
@@ -508,6 +842,74 @@ class _NouvelleDemandeActeState extends State<NouvelleDemandeActe> {
         // return FirebaseFirestore.instance.collection('Motifs').get();
         break;
     }
+  }
+
+  _imgFromCamera() async {
+    ImagePicker imagePicker = ImagePicker();
+
+    PickedFile image = await imagePicker.getImage(
+        source: ImageSource.camera, imageQuality: 50);
+
+    setState(() {
+      print(image.toString());
+      _image = File(image.path);
+    });
+  }
+
+  _imgFromGallery() async {
+    ImagePicker imagePicker = ImagePicker();
+    PickedFile image = await imagePicker.getImage(
+        source: ImageSource.gallery, imageQuality: 50);
+    setState(() {
+      if (image != null) _image = File(image.path);
+    });
+  }
+
+  Future uploadImageToFirebase(
+      BuildContext context, File _image1, DemandeActe _demandeacte) async {
+    String data = "";
+    FirebaseStorage storage = FirebaseStorage.instance;
+    if (_image1 == null) {
+      demandeActeSetup(_demandeacte);
+    }
+    Reference ref = storage.ref().child("upload/" + DateTime.now().toString());
+    UploadTask uploadTask = ref.putFile(_image1);
+    uploadTask.then((res) async {
+      _demandeacte.pieceJointe = await res.ref.getDownloadURL();
+      // data = await res.ref.getDownloadURL();
+      demandeActeSetup(_demandeacte);
+    });
+    print('uploadImageToFirebase $data');
+  }
+
+  void _showPicker(context) {
+    showModalBottomSheet(
+        context: context,
+        builder: (BuildContext bc) {
+          return SafeArea(
+            child: Container(
+              child: new Wrap(
+                children: <Widget>[
+                  new ListTile(
+                      leading: new Icon(Icons.photo_library),
+                      title: new Text('Phot o Library'),
+                      onTap: () {
+                        _imgFromGallery();
+                        Navigator.of(context).pop();
+                      }),
+                  new ListTile(
+                    leading: new Icon(Icons.photo_camera),
+                    title: new Text('Camera'),
+                    onTap: () {
+                      _imgFromCamera();
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
   }
 
   Future<void> _showDropList(int type) async {

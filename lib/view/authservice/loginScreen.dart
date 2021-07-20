@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:rh_mef/main.dart';
 import 'package:rh_mef/net/firebase.dart';
-import 'package:rh_mef/view/passwordreset.dart';
+import 'package:rh_mef/view/authservice/passwordreset.dart';
 
 class LoginPage extends StatelessWidget {
   @override
@@ -29,9 +29,11 @@ class _LoginContentState extends State<LoginContent> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: Center(
           child: Text(
             'Login Page',
+            style: TextStyle(color: Colors.black),
             textAlign: TextAlign.center,
           ),
         ),

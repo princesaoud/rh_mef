@@ -3,10 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:rh_mef/models/actualites_type.dart';
-import 'package:rh_mef/view/demande_dactes.dart';
-import 'package:rh_mef/view/profiledetails.dart';
-import 'package:rh_mef/view/retraiteProcedure.dart';
+import 'package:rh_mef/view/complaint/complaint.dart';
+import 'package:rh_mef/view/demandeacte/demande_dactes.dart';
+import 'package:rh_mef/view/retraite/retraiteProcedure.dart';
 import 'package:rh_mef/view/webView.dart';
+
+import '../profiledetails.dart';
 
 // const String _kGalleryAssetsPackage = 'flutter_gallery_assets';
 // enum CardDemoType {
@@ -346,20 +348,14 @@ class _DetailsInformationsState extends State<DetailsInformations> {
               padding: const EdgeInsets.all(10),
               child: TextButton(
                 onPressed: () {
-                  FirebaseFirestore.instance
-                      .collection('Profile')
-                      .doc(auth.currentUser.uid)
-                      .snapshots()
-                      .forEach((element) {
-                    print(element.data());
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              ProfileDetails(values: element)),
-                    );
-                  });
-                },
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProfileDetails(),
+                    ),
+                  );
+                  },
                 child: Column(
                   children: [
                     Card(
@@ -386,7 +382,7 @@ class _DetailsInformationsState extends State<DetailsInformations> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => Demande_Actes()),
+                    MaterialPageRoute(builder: (context) => DemandeActes()),
                   );
                 },
                 child: Column(
@@ -431,6 +427,35 @@ class _DetailsInformationsState extends State<DetailsInformations> {
                     Expanded(
                       child: Text(
                         "Retraite",
+                        style: TextStyle(color: Colors.deepOrangeAccent),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              color: Colors.orange[100],
+            ),
+            Container(
+              padding: const EdgeInsets.all(10),
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Complaint()),
+                  );
+                },
+                child: Column(
+                  children: [
+                    Card(
+                      child: Icon(
+                        Icons.file_copy_rounded,
+                        size: 50,
+                        color: Colors.deepOrangeAccent,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        "Plainte/Suggestion",
                         style: TextStyle(color: Colors.deepOrangeAccent),
                       ),
                     ),

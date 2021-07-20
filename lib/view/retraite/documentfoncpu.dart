@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:rh_mef/app_theme.dart';
 
 import '../../constantes.dart';
 
@@ -18,22 +19,30 @@ class DocumentSelected extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.orangeAccent,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () {
-            // Navigator.pushReplacement(context,
-            //     MaterialPageRoute(builder: (context) => RetraiteProccedure()));
-            Navigator.pop(context);
-          },
-          icon: Icon(Icons.close_rounded),
-        ),
+        backgroundColor: AppTheme.nearlyWhite,
+        leading: Text(""),
         title: Text(
           '$title',
           softWrap: true,
-          style: TextStyle(fontSize: 15),
+          style: TextStyle(fontSize: 17, color: AppTheme.grey),
           textAlign: TextAlign.center,
         ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: () {
+              // Navigator.pushReplacement(context,
+              //     MaterialPageRoute(builder: (context) => RetraiteProccedure()));
+              Navigator.pop(context);
+            },
+            icon: Icon(
+              Icons.close_rounded,
+              color: AppTheme.grey,
+            ),
+          ),
+        ],
       ),
       body: StreamBuilder<DocumentSnapshot>(
           stream: FirebaseFirestore.instance

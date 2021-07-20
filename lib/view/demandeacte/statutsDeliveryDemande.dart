@@ -5,6 +5,7 @@ import 'package:commons/commons.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:rh_mef/app_theme.dart';
 import 'package:rh_mef/models/stepsActe.dart';
 
 class StatutsDemande extends StatefulWidget {
@@ -37,11 +38,19 @@ class _StatutsDemandeState extends State<StatutsDemande> {
   @override
   Widget build(BuildContext context) {
     getNumeroDemande();
+    print('statuts delivery : ${widget.listSteps.toString()}');
     if (documentSnapshot == null) {
       return Scaffold(
         appBar: AppBar(
-          title: Text("Chargement..."),
-          backgroundColor: Colors.orangeAccent,
+          leading: Text(""),
+          title: Text("Chargement "),
+          backgroundColor: Colors.white70,
+          actions: [
+            IconButton(
+              icon: Icon(Icons.close),
+              onPressed: () {},
+            ),
+          ],
         ),
         body: Center(
           child: CircularProgressIndicator(),
@@ -52,16 +61,33 @@ class _StatutsDemandeState extends State<StatutsDemande> {
       print(widget.listSteps.length);
       return Scaffold(
         appBar: AppBar(
+          leading: Text(""),
           title: Text("Tracking de votre demande "),
-          backgroundColor: Colors.orange,
+          backgroundColor: Colors.white70,
+          actions: [
+            IconButton(
+              icon: Icon(Icons.close),
+              onPressed: () {},
+            ),
+          ],
         ),
         body: presenceSoldeTimeLine(),
       );
     } else if (widget.listSteps.length == 0) {
       return Scaffold(
         appBar: AppBar(
-          title: Text("Pas normal"),
-          backgroundColor: Colors.orange,
+          leading: Text(""),
+          title: Text("Tracking de votre demande "),
+          backgroundColor: Colors.white70,
+          actions: [
+            IconButton(
+              icon: Icon(
+                Icons.close,
+                color: AppTheme.grey,
+              ),
+              onPressed: () {},
+            ),
+          ],
         ),
         body: Card(),
       );
@@ -69,8 +95,21 @@ class _StatutsDemandeState extends State<StatutsDemande> {
       // print("le nom ${widget.listSteps.length}");
       return Scaffold(
         appBar: AppBar(
+          leading: Text(""),
           title: Text("Tracking de votre demande "),
-          backgroundColor: Colors.orange,
+          backgroundColor: AppTheme.grey,
+          centerTitle: true,
+          actions: [
+            IconButton(
+              icon: Icon(
+                Icons.close,
+                color: AppTheme.nearlyWhite,
+              ),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
         ),
         body: orderTimeLine(),
       );
@@ -253,8 +292,8 @@ class _StatutsDemandeState extends State<StatutsDemande> {
                                   statutsColor[1],
                                   textColor[1]),
                             timelineLastRow(
-                                "${widget.listStepsError.last.title}",
-                                "${widget.listSteps.last.description}",
+                                "${widget.listStepsError[2].title}",
+                                "${widget.listSteps[2].description}",
                                 statutsColor[2],
                                 textColor[2]),
                           ],
@@ -576,6 +615,7 @@ class _StatutsDemandeState extends State<StatutsDemande> {
 
   Widget timelineLastRow(String title, String subTile, MaterialColor colors,
       MaterialColor textColors) {
+    print('$title $subTile');
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: <Widget>[

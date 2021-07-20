@@ -34,18 +34,25 @@ Future<bool> internetChecking() async {
   return false;
 }
 
-Future<void> userSetup(String designation, String number, String email,
-    String complaintType, String observation) async {
-  CollectionReference acteDemand =
-      FirebaseFirestore.instance.collection('acteDemand');
+Future<void> complaintSetup(
+    {String complaintType, String observation, String userId}) async {
+  CollectionReference complaintReference =
+      FirebaseFirestore.instance.collection('Complaint');
   // FirebaseAuth auth = FirebaseAuth.instance;
   // String uid = auth.currentUser.uid.toString();
-  acteDemand.add({
-    'designation': designation,
-    'number': number,
-    'email': email,
+  var uuid = Uuid();
+  String docId = uuid.v4();
+
+  complaintReference.doc(docId).set({
+    'id': Random().nextInt(160000),
     'complaintType': complaintType,
     'observation': observation,
+    'userId': userId,
+    'steps': 1,
+    'created': DateTime.now(),
+    'recevabilite': DateTime.now(),
+    'error': '',
+    'key': docId
   });
   return;
 }
@@ -82,7 +89,7 @@ Future<void> demandeActeSetup(DemandeActe _demandeacte) async {
   String matricule = shar.getString('matricule');
   FirebaseAuth auth = FirebaseAuth.instance;
 
-  FirebaseMessaging().getToken().then((token) async {
+  FirebaseMessaging.instance.getToken().then((token) async {
     acteDemand.doc(docId).set({
       'key': docId,
       'deviceId': token,
@@ -111,8 +118,8 @@ Future<void> userProfileSetup(UserDetails userDetails, String userId) async {
       FirebaseFirestore.instance.collection('Profile');
   // FirebaseAuth auth = FirebaseAuth.instance;
   // String uid = auth.currentUser.uid.toString();
-  FirebaseMessaging().getToken().then((token) async {
-    profileReference.doc(userId).set({
+  FirebaseMessaging.instance.getToken().then((token) async {
+    profileReference.doc(userId).update({
       'matricule': userDetails.matricule,
       'nom': userDetails.nom,
       'tel': userDetails.tel_domicile,
@@ -197,11 +204,12 @@ Future<void> newsSetup(Actualites actualites) async {
 // sendLocalNotification() {}
 
 Future<bool> callOnFcmApiSendPushNotifications(
-    String userToken, String description) async {
+    String userToken, String description, String screen) async {
   final postUrl = 'https://fcm.googleapis.com/fcm/send';
   final data = {
     "registration_ids": userToken,
     "collapse_key": "type_a",
+    "screen": "$screen",
     "notification": {
       "title": 'DRH-MEF',
       "body": '$description',
@@ -358,11 +366,9 @@ createNewDemandeActe(List<String> arguments) async {
 }
 
 getLoginAgentFirebaseWay(
-    {String email, String password, BuildContext context}) async {
+    {var userId, String email, BuildContext context}) async {
   try {
-    UserCredential userCredential = await FirebaseAuth.instance
-        .signInWithEmailAndPassword(email: "$email", password: "$password");
-    await FirebaseMessaging().getToken().then((token) async {
+    await FirebaseMessaging.instance.getToken().then((token) async {
       // await actDemande.update({"deviceId": token});
       // print('the token of device: $token');
       // print('the currentUserId of device: ${userCredential.user.uid}');
@@ -380,13 +386,9 @@ getLoginAgentFirebaseWay(
         element.reference.update({'deviceId': token});
       });
 
-      await FirebaseFirestore.instance
-          .collection("Profile")
-          .doc('${userCredential.user.uid}')
-          .update({'token': token});
       DocumentSnapshot document = await FirebaseFirestore.instance
           .collection('Profile')
-          .doc(userCredential.user.uid)
+          .doc(userId.toString())
           .get();
       SharedPreferences sharedPreferences =
           await SharedPreferences.getInstance();
